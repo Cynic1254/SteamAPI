@@ -1,0 +1,35 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "SteamAPI",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "Cynic",
+	"CreatedByURL": "https://lassebroekstra.cynic1254.com/",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+    "Plugins": [
+        {
+            "Name": "SteamShared",
+            "Enabled": true,
+            "PlatformAllowList": [
+                "Win64",
+                "Mac",
+                "Linux"
+            ]
+        }
+    ],
+	"Modules": [
+		{
+			"Name": "SteamCore",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
