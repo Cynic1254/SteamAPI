@@ -30,6 +30,11 @@
 			"Name": "SteamCore",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		}
+		},
+        {
+            "Name": "SteamInput",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
 	]
 }
