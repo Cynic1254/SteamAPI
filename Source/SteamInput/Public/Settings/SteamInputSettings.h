@@ -21,19 +21,33 @@ struct FSteamInputAction
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Steam Input")
+	UPROPERTY(Config, EditAnywhere, Category = "Steam Input")
+	FName ActionName;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Steam Input")
 	EKeyType KeyType = EKeyType::Button;
-
-	UPROPERTY(VisibleAnywhere, Category = "Steam Input", meta = (DisplayName = "Handle"))
-	ControllerActionHandle_t CachedHandle = 0;
-
-	UPROPERTY(VisibleAnywhere, Category = "Steam Input")
+	
 	bool bHandleValid = false;
 
-	FSteamInputAction() = default;
-	FSteamInputAction(EKeyType InKeyType) : KeyType(InKeyType) {}
+	ControllerActionHandle_t CachedHandle = 0;
 
-	bool Update(FName KeyName);
+	FSteamInputAction() = default;
+	FSteamInputAction(const FName& KeyName, const EKeyType KeyType) : ActionName(KeyName), KeyType(KeyType)
+	{
+		GenerateHandle();
+	}
+
+	bool GenerateHandle();
+
+	void GenerateKey(bool RefreshHandle = false);
+
+#if WITH_EDITOR
+	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+	{
+		GenerateHandle();
+		GenerateKey();
+	}
+#endif
 };
 
 /**
@@ -45,42 +59,27 @@ class STEAMINPUT_API USteamInputSettings : public UObject
 	GENERATED_BODY()
 
 public:
-	USteamInputSettings();
-
 	UPROPERTY(Config, EditAnywhere, Category = "Actions", meta = (ForceInlineRow = true))
-	TMap<FName, FSteamInputAction> Keys;
-
-	UPROPERTY(Config, EditAnywhere, Category = "Actions")
-	FName MenuCategory = "SteamBindings";
-
-	static void RegenerateKeys();
-
-	UFUNCTION(CallInEditor = true, Category = "Actions")
-	void RefreshHandles();
+	TArray<FSteamInputAction> Keys;
+	
+	static const FName MenuCategory;
 	
 	static FName GetXAxisName(const FName Name);
 
 	static FName GetYAxisName(const FName Name);
 
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Input")
-	TMap<FKey, EUINavigation> KeyEventRules;
+	void RefreshHandles();
 
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Input")
-	TMap<FKey, EUINavigationAction> KeyActionRules;
-
-	static void ApplySlateConfig();
-
-	UFUNCTION()
-	static TArray<FName> GetFSteamKeysOptions();
-
+	UPROPERTY(VisibleAnywhere)
+	int AppID;
 private:
 	virtual void PostInitProperties() override;
-	void GenerateKey(FName ActionName, EKeyType KeyType) const;
+	virtual void PostLoad() override;
 
-	void UpdateAllHandles();
+	UFUNCTION()
+	void SteamInputInitialized();
 	
 #if WITH_EDITOR
-	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
 };

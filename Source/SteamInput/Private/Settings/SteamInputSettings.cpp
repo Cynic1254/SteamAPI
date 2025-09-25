@@ -2,12 +2,18 @@
 
 #include "Settings/SteamInputSettings.h"
 
-#include "Framework/Application/NavigationConfig.h"
-#include "Globals.h"
+#include "SteamInput.h"
+#include "SteamInputTypes.h"
 #include "steam/isteaminput.h"
+#include "steam/isteamutils.h"
 
-bool FSteamInputAction::Update(const FName KeyName)
+DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
+
+const FName USteamInputSettings::MenuCategory = "SteamBindings";
+
+bool FSteamInputAction::GenerateHandle()
 {
+
 	if (!SteamInput())
 	{
 		bHandleValid = false;
@@ -18,14 +24,14 @@ bool FSteamInputAction::Update(const FName KeyName)
 	{
 	case EKeyType::Button:
 		{
-			const ControllerDigitalActionHandle_t Handle = SteamInput()->GetDigitalActionHandle(TCHAR_TO_UTF8(*KeyName.ToString()));
+			const ControllerDigitalActionHandle_t Handle = SteamInput()->GetDigitalActionHandle(TCHAR_TO_UTF8(*ActionName.ToString()));
 			CachedHandle = Handle;
 			bHandleValid = (Handle != 0);
 		}
 		break;
 	default:
 		{
-			const ControllerAnalogActionHandle_t Handle = SteamInput()->GetAnalogActionHandle(TCHAR_TO_UTF8(*KeyName.ToString()));
+			const ControllerAnalogActionHandle_t Handle = SteamInput()->GetAnalogActionHandle(TCHAR_TO_UTF8(*ActionName.ToString()));
 			CachedHandle = Handle;
 			bHandleValid = (Handle != 0);
 		}
@@ -35,35 +41,62 @@ bool FSteamInputAction::Update(const FName KeyName)
 	return bHandleValid;
 }
 
-USteamInputSettings::USteamInputSettings()
+void FSteamInputAction::GenerateKey(bool RefreshHandle)
 {
-	if (FSlateApplication::IsInitialized())
+	switch (KeyType)
 	{
-		const TSharedRef<FNavigationConfig> Config = FSlateApplication::Get().GetNavigationConfig();
-		KeyActionRules = Config->KeyActionRules;
-		KeyEventRules = Config->KeyEventRules;
+	case EKeyType::Button:
+		{
+			const FKey Key{ActionName};
+			if (!EKeys::GetKeyDetails(Key))
+			{
+				EKeys::AddKey({Key, Key.GetDisplayName(), FKeyDetails::GamepadKey, USteamInputSettings::MenuCategory});
+			}
+			else
+			{
+				UE_LOG(SteamInputLog, Warning, TEXT("Key with name: %s, already exists"), *ActionName.ToString())
+			}
+		}
+		break;
+	case EKeyType::Analog:
+		{
+			const FKey Key{ActionName};
+			if (!EKeys::GetKeyDetails(Key))
+			{
+				EKeys::AddKey({Key, Key.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis1D, USteamInputSettings::MenuCategory});
+			}
+			else
+			{
+				UE_LOG(SteamInputLog, Warning, TEXT("Key with name: %s, already exists"), *ActionName.ToString())
+			}
+		}
+		break;
+	case EKeyType::MouseInput:
+	case EKeyType::Joystick:
+		{
+			const FKey KeyX{USteamInputSettings::GetXAxisName(ActionName)};
+			const FKey KeyY{USteamInputSettings::GetYAxisName(ActionName)};
+			const FKey Key{ActionName};
+
+			if (!EKeys::GetKeyDetails(Key))
+			{
+				EKeys::AddKey({KeyX, KeyX.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis1D, USteamInputSettings::MenuCategory});
+				EKeys::AddKey({KeyY, KeyY.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis1D, USteamInputSettings::MenuCategory});
+				EKeys::AddPairedKey({Key, Key.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis2D, USteamInputSettings::MenuCategory}, KeyX, KeyY);
+			}
+			else
+			{
+				UE_LOG(SteamInputLog, Warning, TEXT("Key with name: %s, already exists"), *ActionName.ToString())
+			}
+			
+		}
+		break;
 	}
-}
 
-void USteamInputSettings::RegenerateKeys()
-{
-	USteamInputSettings* Settings = GetMutableDefault<USteamInputSettings>();
-
-	EKeys::RemoveKeysWithCategory(Settings->MenuCategory);
-
-	for (const auto Key : Settings->Keys)
+	if (RefreshHandle)
 	{
-		Settings->GenerateKey(Key.Key, Key.Value.KeyType);
+		GenerateHandle();
 	}
-}
-
-void USteamInputSettings::RefreshHandles()
-{
-	UpdateAllHandles();
-	
-#if WITH_EDITOR
-	Modify();
-#endif
 }
 
 FName USteamInputSettings::GetXAxisName(const FName Name)
@@ -76,116 +109,55 @@ FName USteamInputSettings::GetYAxisName(const FName Name)
 	return FName{Name.ToString() + TEXT("_AxisY")};
 }
 
-void USteamInputSettings::ApplySlateConfig()
+void USteamInputSettings::RefreshHandles()
 {
-	if (FSlateApplication::IsInitialized())
-	{
-		const USteamInputSettings* Settings = GetDefault<USteamInputSettings>();
-		const TSharedRef<FNavigationConfig> Config = FSlateApplication::Get().GetNavigationConfig();
-		Config->KeyActionRules = Settings->KeyActionRules;
-		Config->KeyEventRules = Settings->KeyEventRules;
-	}
-}
+	EKeys::RemoveKeysWithCategory(MenuCategory);
 
-TArray<FName> USteamInputSettings::GetFSteamKeysOptions()
-{
-	TArray<FName> Keys;
-	GetDefault<USteamInputSettings>()->Keys.GetKeys(Keys);
-	return Keys;
+	for (FSteamInputAction Key : Keys)
+	{
+		Key.GenerateKey(true);
+	}
 }
 
 void USteamInputSettings::PostInitProperties()
 {
 	UObject::PostInitProperties();
 
-	RegenerateKeys();
-	ApplySlateConfig();
+	SteamInputInitialized::FDelegate Delegate{};
+
+	Delegate.BindUObject(this, &USteamInputSettings::SteamInputInitialized);
+	
+	FSteamInputModule::Get().BindToOnInputInitialized(Delegate);
 }
 
-void USteamInputSettings::GenerateKey(FName ActionName, EKeyType KeyType) const
+void USteamInputSettings::PostLoad()
 {
-	switch (KeyType)
-	{
-	case EKeyType::Button:
-		{
-			const FKey Key{ActionName};
-			if (EKeys::GetKeyDetails(Key))
-			{
-				UE_LOG(SteamInputLog, Error, TEXT("Key %s already exists"), *Key.ToString());
-				break;
-			}
-
-			EKeys::AddKey({Key, Key.GetDisplayName(), FKeyDetails::GamepadKey, MenuCategory});
-			break;
-		}
-	case EKeyType::Analog:
-		{
-			const FKey Key{ActionName};
-			if (EKeys::GetKeyDetails(Key))
-			{
-				UE_LOG(SteamInputLog, Error, TEXT("Key %s already exists"), *Key.ToString());
-				break;
-			}
-
-			EKeys::AddKey({Key, Key.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis1D, MenuCategory});
-			break;
-		}
-	case EKeyType::MouseInput:
-	case EKeyType::Joystick:
-		{
-			const FKey KeyX{GetXAxisName(ActionName)};
-			const FKey KeyY{GetYAxisName(ActionName)};
-			const FKey Key{ActionName};
-
-			EKeys::AddKey({KeyX, KeyX.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis1D, MenuCategory});
-			EKeys::AddKey({KeyY, KeyY.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis1D, MenuCategory});
-			EKeys::AddPairedKey({Key, Key.GetDisplayName(), FKeyDetails::GamepadKey | FKeyDetails::Axis2D, MenuCategory}, KeyX, KeyY);
-		}
-		break;
-	}
+	UObject::PostLoad();
 }
 
-void USteamInputSettings::UpdateAllHandles()
+void USteamInputSettings::SteamInputInitialized()
 {
-	for (auto& Key : Keys)
-	{
-		Key.Value.Update(Key.Key);
-	}
+	AppID = SteamUtils()->GetAppID();
+
+	RefreshHandles();
 }
+
 
 #if WITH_EDITOR
-void USteamInputSettings::PreEditChange(FProperty* PropertyAboutToChange)
+
+void USteamInputSettings::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
 {
-	UObject::PreEditChange(PropertyAboutToChange);
+	UObject::PostEditChangeChainProperty(PropertyChangedEvent);
 
-	if (PropertyAboutToChange->GetFName() == GET_MEMBER_NAME_CHECKED(USteamInputSettings, MenuCategory))
-	{
-		EKeys::RemoveKeysWithCategory(MenuCategory);
-	}
-}
-
-void USteamInputSettings::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	UObject::PostEditChangeProperty(PropertyChangedEvent);
-
-	const FName PropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None;
 	const FName MemberPropertyName = PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None;
-
-	if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(USteamInputSettings, Keys))
+    
+	// Check if we're dealing with the Keys array
+	if (PropertyChangedEvent.PropertyChain.GetActiveMemberNode() && 
+		PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue() &&
+		PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue()->GetFName() == GET_MEMBER_NAME_CHECKED(USteamInputSettings, Keys))
 	{
-		if (PropertyChangedEvent.ChangeType == EPropertyChangeType::ArrayAdd ||
-			PropertyChangedEvent.ChangeType == EPropertyChangeType::ValueSet ||
-			PropertyChangedEvent.ChangeType == EPropertyChangeType::Interactive)
-		{
-			UpdateAllHandles();
-		}
-
-		RegenerateKeys();
-	}
-	else
-	{
-		RegenerateKeys();
-		ApplySlateConfig();
+		RefreshHandles();
 	}
 }
+
 #endif

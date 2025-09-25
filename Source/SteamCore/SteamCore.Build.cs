@@ -10,7 +10,7 @@ public class SteamCore : ModuleRules
             new string[]
             {
                 "Core",
-                "CoreUObject"
+                "CoreUObject",
             }
         );
 
@@ -21,6 +21,15 @@ public class SteamCore : ModuleRules
                 "Engine"
             }
         );
+
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(new string[]
+            {
+                "UnrealEd",
+                "Settings"
+            });
+        }
         
         AddEngineThirdPartyPrivateStaticDependencies(Target, "Steamworks");
     }

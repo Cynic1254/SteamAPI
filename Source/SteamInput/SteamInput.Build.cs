@@ -10,16 +10,22 @@ public class SteamInput : ModuleRules
             new string[]
             {
                 "Core",
+                "InputDevice",
+                "CoreUObject",
             }
         );
 
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                "CoreUObject",
                 "Engine",
                 "SteamCore",
-                "InputDevice"
+                "InputCore",
+                "ApplicationCore",
+                "Slate",
+                "SlateCore",
+                "SteamShared",
+                
             }
         );
 
@@ -29,7 +35,7 @@ public class SteamInput : ModuleRules
             {
                 "UnrealEd",
                 "Settings",
-                "PropertyEditor"
+                "EditorStyle"
             });
         }
         

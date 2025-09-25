@@ -18,21 +18,21 @@ public:
 	virtual bool IsGamepadAttached() const override;
 	virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar) override;
 
-	void SetVibration(int32 ControllerId, const FForceFeedbackValues& Values);
+	void SetVibration(int32 ControllerId, const FForceFeedbackValues& Values) const;
 private:
 	struct FControllerState
 	{
 		/** Analog status for all actions from previous frame, on a -1.0 to 1.0 range */
-		TMap<FName, ControllerAnalogActionData_t> AnalogStatusMap;
+		TMap<FName, ControllerAnalogActionData_t> AnalogStatusMap{};
 
 		/** Button status for all actions from previous frame (pressed down or not) */
-		TMap<FName, bool> DigitalStatusMap;
+		TMap<FName, bool> DigitalStatusMap{};
 
 		/** List of times that if a button is still pressed counts as a "repeated press" */
-		TMap<FName, double> DigitalRepeatTimeMap;
+		TMap<FName, double> DigitalRepeatTimeMap{};
 
 		/** Values for force feedback on this controller.  We only consider the LEFT_LARGE channel for SteamControllers */
-		FForceFeedbackValues VibeValues;
+		FForceFeedbackValues VibeValues{};
 
 		FControllerState() = default;
 	};
@@ -45,8 +45,8 @@ private:
 	double ButtonRepeatDelay = 0.1;
 
 	void ProcessControllerInput(int32 ControllerIndex, InputHandle_t ControllerHandle, FControllerState& State);
-	void ProcessDigitalAction(int32 ControllerIndex, InputHandle_t ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State);
-	void ProcessAnalogAction(int32 ControllerIndex, InputHandle_t ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State);
+	void ProcessDigitalAction(int32 ControllerIndex, InputHandle_t ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const;
+	void ProcessAnalogAction(int32 ControllerIndex, InputHandle_t ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const;
 
 	bool ShouldProcessKeyRepeat(const FName& ActionName, FControllerState& State, double CurrentTime) const;
 	void UpdateKeyRepeatTiming(const FName& ActionName, FControllerState& State, double CurrentTime) const;

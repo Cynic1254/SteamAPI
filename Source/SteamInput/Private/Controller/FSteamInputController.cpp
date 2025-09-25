@@ -1,7 +1,8 @@
 ﻿#include "FSteamInputController.h"
 
-#include "Globals.h"
 #include "Settings/SteamInputSettings.h"
+
+DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
 
 FSteamInputController::FSteamInputController(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler) : MessageHandler(InMessageHandler)
 {
@@ -41,7 +42,7 @@ void FSteamInputController::SendControllerEvents()
 	}
 }
 
-void FSteamInputController::SetChannelValue(int32 ControllerId, FForceFeedbackChannelType ChannelType, float Value)
+void FSteamInputController::SetChannelValue(const int32 ControllerId, const FForceFeedbackChannelType ChannelType, const float Value)
 {
 	if (ChannelType != FForceFeedbackChannelType::LEFT_LARGE && ChannelType != FForceFeedbackChannelType::RIGHT_LARGE)
 	{
@@ -64,7 +65,7 @@ void FSteamInputController::SetChannelValue(int32 ControllerId, FForceFeedbackCh
 	}
 }
 
-void FSteamInputController::SetChannelValues(int32 ControllerId, const FForceFeedbackValues& Values)
+void FSteamInputController::SetChannelValues(const int32 ControllerId, const FForceFeedbackValues& Values)
 {
 	if (ControllerId >= 0 && ControllerId < STEAM_INPUT_MAX_COUNT)
 	{
@@ -87,7 +88,7 @@ bool FSteamInputController::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevic
 	return false;
 }
 
-void FSteamInputController::SetVibration(int32 ControllerId, const FForceFeedbackValues& Values)
+void FSteamInputController::SetVibration(const int32 ControllerId, const FForceFeedbackValues& Values) const
 {
 	const InputHandle_t ControllerHandle = SteamInput()->GetControllerForGamepadIndex(ControllerId);
 	if (!ControllerHandle || !IsGamepadAttached())
@@ -107,7 +108,7 @@ void FSteamInputController::SetVibration(int32 ControllerId, const FForceFeedbac
 	}
 }
 
-void FSteamInputController::ProcessControllerInput(int32 ControllerIndex, InputHandle_t ControllerHandle,
+void FSteamInputController::ProcessControllerInput(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
                                                    FControllerState& State)
 {
 	//TODO: Handle Action Set
@@ -116,35 +117,33 @@ void FSteamInputController::ProcessControllerInput(int32 ControllerIndex, InputH
 	static FString ControllerName(TEXT("SteamController"));
 	FInputDeviceScope InputScope{this, SystemName, ControllerIndex, ControllerName};
 
-	for (auto& KeyPair : GetDefault<USteamInputSettings>()->Keys)
+	for (auto& Key : GetDefault<USteamInputSettings>()->Keys)
 	{
-		const FName& ActionName = KeyPair.Key;
-		const FSteamInputAction& ActionData = KeyPair.Value;
+		const FName& ActionName = Key.ActionName;
 
-		if (!ActionData.bHandleValid)
+		if (!Key.bHandleValid)
 		{
 			continue;
 		}
 
-		switch (ActionData.KeyType)
+		switch (Key.KeyType)
 		{
 		case EKeyType::Button:
-			ProcessDigitalAction(ControllerIndex, ControllerHandle, ActionName, ActionData, State);
+			ProcessDigitalAction(ControllerIndex, ControllerHandle, ActionName, Key, State);
 			break;
 		default:
-			ProcessAnalogAction(ControllerIndex, ControllerHandle, ActionName, ActionData, State);
+			ProcessAnalogAction(ControllerIndex, ControllerHandle, ActionName, Key, State);
 			break;
 		}
 	}
 }
 
-void FSteamInputController::ProcessDigitalAction(int32 ControllerIndex, InputHandle_t ControllerHandle,
-	const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State)
+void FSteamInputController::ProcessDigitalAction(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
+	const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const
 {
-	const InputDigitalActionData_t ActionState = SteamInput()->GetDigitalActionData(ControllerHandle, ActionData.CachedHandle);
+	const auto [bState, bActive] = SteamInput()->GetDigitalActionData(ControllerHandle, ActionData.CachedHandle);
 
 	const bool bPreviousState = State.DigitalStatusMap.FindRef(ActionName);
-	const bool bCurrentState = ActionState.bState;
 
 	const FPlatformUserId UserId = GetPlatformUserId(ControllerIndex);
 	const FInputDeviceId DeviceId = GetInputDeviceId(ControllerIndex);
@@ -156,31 +155,31 @@ void FSteamInputController::ProcessDigitalAction(int32 ControllerIndex, InputHan
 
 	const double CurrentTime = FPlatformTime::Seconds();
 
-	if (!bPreviousState && bCurrentState)
+	if (!bPreviousState && bState)
 	{
 		MessageHandler->OnControllerButtonPressed(ActionName, UserId, DeviceId, false);
 		UpdateKeyRepeatTiming(ActionName, State, CurrentTime);
 
 		//TODO: Process Slate
 	}
-	else if (bPreviousState && !bCurrentState)
+	else if (bPreviousState && !bState)
 	{
 		MessageHandler->OnControllerButtonReleased(ActionName, UserId, DeviceId, false);
 		State.DigitalRepeatTimeMap.Remove(ActionName);
 
 		//TODO: Process Slate
 	}
-	else if (bPreviousState && bCurrentState && ShouldProcessKeyRepeat(ActionName, State, CurrentTime))
+	else if (bPreviousState && bState && ShouldProcessKeyRepeat(ActionName, State, CurrentTime))
 	{
 		MessageHandler->OnControllerButtonPressed(ActionName, UserId, DeviceId, true);
 		UpdateKeyRepeatTiming(ActionName, State, CurrentTime);
 	}
 
-	State.DigitalStatusMap.Add(ActionName, bCurrentState);
+	State.DigitalStatusMap.Add(ActionName, bState);
 }
 
-void FSteamInputController::ProcessAnalogAction(int32 ControllerIndex, InputHandle_t ControllerHandle,
-	const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State)
+void FSteamInputController::ProcessAnalogAction(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
+	const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const
 {
 	const InputAnalogActionData_t ActionState = SteamInput()->GetAnalogActionData(ControllerHandle, ActionData.CachedHandle);
 
@@ -225,6 +224,8 @@ void FSteamInputController::ProcessAnalogAction(int32 ControllerIndex, InputHand
 			MessageHandler->OnControllerAnalog(YAxisName, UserId, DeviceId, ActionState.y);
 		}
 		break;
+	default:
+		break;
 	}
 
 	State.AnalogStatusMap.Add(ActionName, ActionState);
@@ -238,7 +239,7 @@ bool FSteamInputController::ShouldProcessKeyRepeat(const FName& ActionName, FCon
 }
 
 void FSteamInputController::UpdateKeyRepeatTiming(const FName& ActionName, FControllerState& State,
-	double CurrentTime) const
+	const double CurrentTime) const
 {
 	const bool bIsFirstRepeat = !State.DigitalRepeatTimeMap.Contains(ActionName);
 	const double DelayToUse = bIsFirstRepeat ? InitialButtonRepeatDelay : ButtonRepeatDelay;
@@ -246,7 +247,7 @@ void FSteamInputController::UpdateKeyRepeatTiming(const FName& ActionName, FCont
 	State.DigitalRepeatTimeMap.Add(ActionName, CurrentTime + DelayToUse);
 }
 
-FInputDeviceId FSteamInputController::GetInputDeviceId(int32 ControllerIndex) const
+FInputDeviceId FSteamInputController::GetInputDeviceId(const int32 ControllerIndex) const
 {
 	FPlatformUserId UserId;
 	FInputDeviceId DeviceId;
@@ -254,7 +255,7 @@ FInputDeviceId FSteamInputController::GetInputDeviceId(int32 ControllerIndex) co
 	return DeviceId;
 }
 
-FPlatformUserId FSteamInputController::GetPlatformUserId(int32 ControllerIndex) const
+FPlatformUserId FSteamInputController::GetPlatformUserId(const int32 ControllerIndex) const
 {
 	return FPlatformMisc::GetPlatformUserForUserIndex(ControllerIndex);
 }

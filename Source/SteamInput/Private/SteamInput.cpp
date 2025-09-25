@@ -1,33 +1,53 @@
 ﻿#include "SteamInput.h"
 
-#include "ISettingsModule.h"
+#include "SteamCore.h"
 #include "Controller/FSteamInputController.h"
-#include "Settings/FSteamInputActionCustomization.h"
+#include "Settings/SettingsInspector.h"
 #include "Settings/SteamInputSettings.h"
 #include "steam/isteaminput.h"
 
+#if WITH_EDITOR
+#include "ISettingsModule.h"
+#endif
+
 #define LOCTEXT_NAMESPACE "FSteamInputModule"
+
+DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
 
 void FSteamInputModule::StartupModule()
 {
     IInputDeviceModule::StartupModule();
 
-    if (SteamInput())
+	FSteamCoreModule::Get();
+	ClientHandle = FSteamSharedModule::Get().ObtainSteamClientInstanceHandle();
+	
+    if (ClientHandle && FSteamCoreModule::Get().IsInitialized() && SteamInput())
     {
-	    SteamInput()->Init(false);
+	    if (!SteamInput()->Init(false))
+	    {
+		    UE_LOG(SteamInputLog, Log, TEXT("Steam Input failed to initialize"));
+	    }
     	bSteamInputInitialized = true;
     }
 
+	EKeys::AddMenuCategoryDisplayInfo(GetDefault<USteamInputSettings>()->MenuCategory, LOCTEXT("Steam Keys", "Steam Key Category"), TEXT("GraphEditor.PadEvent_16x"));
+	
 #if WITH_EDITOR
     ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
 	SettingsModule.RegisterSettings("Project", "Plugins", "SteamInput", LOCTEXT("SteamInputName", "Steam Input Settings"), LOCTEXT("SteamInputDescription", "Steam Input Settings"), GetMutableDefault<USteamInputSettings>());
-	
+
+	// Register custom property type customization
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyEditorModule.RegisterCustomPropertyTypeLayout(
 		FSteamInputAction::StaticStruct()->GetFName(),
-		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FSteamInputActionCustomization::MakeInstance)
-		);
+		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FSettingsInspector::MakeInstance)
+	);
+    
+	// Notify that customizations have changed
+	PropertyEditorModule.NotifyCustomizationModuleChanged();
 #endif
+
+	InputInitialized.Broadcast();
 }
 
 void FSteamInputModule::ShutdownModule()
@@ -39,21 +59,35 @@ void FSteamInputModule::ShutdownModule()
 	    SteamInput()->Shutdown();
     }
 
+	ClientHandle.Reset();
 	bSteamInputInitialized = false;
 
 #if WITH_EDITOR
-    if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
-    {
-	    FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-    	PropertyEditorModule.UnregisterCustomPropertyTypeLayout(FSteamInputAction::StaticStruct()->GetFName());
-    }
-
+	// Unregister customizations
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyEditorModule.UnregisterCustomPropertyTypeLayout(FSteamInputAction::StaticStruct()->GetFName());
+	}
+	
     if (FModuleManager::Get().IsModuleLoaded("Settings"))
     {
 	    ISettingsModule& SettingsModule = FModuleManager::GetModuleChecked<ISettingsModule>("Settings");
     	SettingsModule.UnregisterSettings("Project", "Plugins", "SteamInput");
     }
 #endif
+}
+
+bool FSteamInputModule::BindToOnInputInitialized(const SteamInputInitialized::FDelegate& InNewDelegate)
+{
+	if (!bSteamInputInitialized)
+	{
+		InputInitialized.Add(InNewDelegate);
+		return false;
+	}
+
+	InNewDelegate.ExecuteIfBound();
+	return true;
 }
 
 TSharedPtr<class IInputDevice> FSteamInputModule::CreateInputDevice(

@@ -29,7 +29,7 @@
 		{
 			"Name": "SteamCore",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PreDefault"
 		},
         {
             "Name": "SteamInput",
