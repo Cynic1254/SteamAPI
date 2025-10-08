@@ -1,7 +1,7 @@
 ﻿#pragma once
 #if WITH_EDITOR
 
-#include "SteamInputSettings.h"
+#include "Settings/SteamInputSettings.h"
 
 struct FSteamInputAction;
 
@@ -25,7 +25,6 @@ protected:
 	static const FSlateBrush* GetHandleStatusIcon(const TSharedPtr<IPropertyHandle>& PropertyHandle);
 	static FText GetHandleStatusTooltip(const TSharedPtr<IPropertyHandle>& PropertyHandle);
 
-	void OnPropertyChanged();
 	static void RefreshHandle(const TSharedPtr<IPropertyHandle>& PropertyHandle);
 };
 

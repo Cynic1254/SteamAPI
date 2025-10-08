@@ -1,5 +1,6 @@
 ﻿#include "FSteamInputController.h"
 
+#include "ActionSets/ActionSets.h"
 #include "Settings/SteamInputSettings.h"
 
 DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
@@ -111,12 +112,18 @@ void FSteamInputController::SetVibration(const int32 ControllerId, const FForceF
 void FSteamInputController::ProcessControllerInput(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
                                                    FControllerState& State)
 {
-	//TODO: Handle Action Set
-
 	static FName SystemName(TEXT("SteamController"));
 	static FString ControllerName(TEXT("SteamController"));
 	FInputDeviceScope InputScope{this, SystemName, ControllerIndex, ControllerName};
 
+	SteamInput()->ActivateActionSet(ControllerHandle, UActionSets::GetActionSetForController(ControllerIndex));
+
+	SteamInput()->DeactivateAllActionSetLayers(ControllerHandle);
+	for (const auto ActionLayer : *UActionSets::GetActionLayersForController(ControllerIndex))
+	{
+		SteamInput()->ActivateActionSetLayer(ControllerHandle, UActionSets::GetActionHandle(ActionLayer));
+	}
+	
 	for (auto& Key : GetDefault<USteamInputSettings>()->Keys)
 	{
 		const FName& ActionName = Key.ActionName;

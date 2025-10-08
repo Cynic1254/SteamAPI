@@ -26,4 +26,6 @@ private:
     
     TSharedPtr<class FSteamInputController> Controller = nullptr;
     TSharedPtr<class FSteamClientInstanceHandler> ClientHandle = nullptr;
+
+    void InitializeSlateIntegration() const;
 };

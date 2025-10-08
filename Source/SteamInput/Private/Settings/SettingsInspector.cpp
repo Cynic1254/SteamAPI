@@ -18,117 +18,118 @@ TSharedRef<IPropertyTypeCustomization> FSettingsInspector::MakeInstance()
 void FSettingsInspector::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow,
 	IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	// Get property handles dynamically (don't store them)
 	const TSharedPtr<IPropertyHandle> ActionNameHandle = GetActionNameHandle(PropertyHandle);
-	const TSharedPtr<IPropertyHandle> KeyTypeHandle = GetKeyTypeHandle(PropertyHandle);
-	
-	HeaderRow
-	.NameContent()
-	[
-		SNew(STextBlock)
-		.Text(LOCTEXT("SteamActionLabel", "Steam Action"))
-		.Font(IDetailLayoutBuilder::GetDetailFont())
-	]
-	.ValueContent()
-	.MaxDesiredWidth(600.0f)
-	[
-		SNew(SHorizontalBox)
+    const TSharedPtr<IPropertyHandle> KeyTypeHandle = GetKeyTypeHandle(PropertyHandle);
+    
+    HeaderRow
+    .NameContent()
+    [
+        SNew(STextBlock)
+        .Text(LOCTEXT("SteamActionLabel", "Steam Action"))
+        .Font(IDetailLayoutBuilder::GetDetailFont())
+    ]
+    .ValueContent()
+    .MaxDesiredWidth(600.0f)
+    [
+        SNew(SHorizontalBox)
 
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.4f)
-		.VAlign(VAlign_Center)
-		.Padding(0, 0, 5, 0)
-		[
-			SNew(SBox)
-			.MinDesiredWidth(120.0f)
-			[
-				ActionNameHandle.IsValid() ? ActionNameHandle->CreatePropertyValueWidget() : SNullWidget::NullWidget
-			]
-		]
+        // Action Name - Use AutoWidth with MinDesiredWidth
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(0, 0, 8, 0)
+        [
+            SNew(SBox)
+            .MinDesiredWidth(150.0f)
+            [
+                ActionNameHandle.IsValid() ? ActionNameHandle->CreatePropertyValueWidget() : SNullWidget::NullWidget
+            ]
+        ]
 
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.25f)
-		.VAlign(VAlign_Center)
-		.Padding(0, 0, 5, 0)
-		[
-			SNew(SBox)
-			.MinDesiredWidth(80.0f)
-			[
-				KeyTypeHandle.IsValid() ? KeyTypeHandle->CreatePropertyValueWidget() : SNullWidget::NullWidget
-			]
-		]
+        // Key Type
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(0, 0, 8, 0)
+        [
+            SNew(SBox)
+            .MinDesiredWidth(100.0f)
+            [
+                KeyTypeHandle.IsValid() ? KeyTypeHandle->CreatePropertyValueWidget() : SNullWidget::NullWidget
+            ]
+        ]
 
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.3f)
-		.VAlign(VAlign_Center)
-		.HAlign(HAlign_Left)
-		.Padding(5, 0, 0, 0)
-		[
-			SNew(SHorizontalBox)
+        // Status Icon
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(0, 0, 4, 0)
+        [
+            SNew(SImage)
+            .Image_Lambda([this, PropertyHandle]() -> const FSlateBrush*
+            {
+                return GetHandleStatusIcon(PropertyHandle);
+            })
+            .ColorAndOpacity_Lambda([this, PropertyHandle]() -> FSlateColor
+            {
+                return GetHandleStatusColor(PropertyHandle);
+            })
+            .ToolTipText_Lambda([this, PropertyHandle]() -> FText
+            {
+                return GetHandleStatusTooltip(PropertyHandle);
+            })
+        ]
 
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			.Padding(0, 0, 3, 0)
-			[
-				SNew(SImage)
-				.Image_Lambda([this, PropertyHandle]() -> const FSlateBrush*
-				{
-					return GetHandleStatusIcon(PropertyHandle);
-				})
-				.ColorAndOpacity_Lambda([this, PropertyHandle]() -> FSlateColor
-				{
-					return GetHandleStatusColor(PropertyHandle);
-				})
-				.ToolTipText_Lambda([this, PropertyHandle]() -> FText
-				{
-					return GetHandleStatusTooltip(PropertyHandle);
-				})
-			]
+        // Status Text
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(0, 0, 8, 0)
+        [
+            SNew(STextBlock)
+            .Text_Lambda([this, PropertyHandle]() -> FText
+            {
+                return GetHandleStatusText(PropertyHandle);
+            })
+            .ColorAndOpacity_Lambda([this, PropertyHandle]() -> FSlateColor
+            {
+                return GetHandleStatusColor(PropertyHandle);
+            })
+            .Font(IDetailLayoutBuilder::GetDetailFont())
+            .ToolTipText_Lambda([this, PropertyHandle]() -> FText
+            {
+                return GetHandleStatusTooltip(PropertyHandle);
+            })
+        ]
 
-			// Status text
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text_Lambda([this, PropertyHandle]() -> FText
-				{
-					return GetHandleStatusText(PropertyHandle);
-				})
-				.ColorAndOpacity_Lambda([this, PropertyHandle]() -> FSlateColor
-				{
-					return GetHandleStatusColor(PropertyHandle);
-				})
-				.Font(IDetailLayoutBuilder::GetDetailFont())
-				.ToolTipText_Lambda([this, PropertyHandle]() -> FText
-				{
-					return GetHandleStatusTooltip(PropertyHandle);
-				})
-			]
-		]
-		// Refresh button
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		.Padding(5, 0, 0, 0)
-		[
-			SNew(SButton)
-			.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
-			.ContentPadding(FMargin(2, 2))
-			.OnClicked_Lambda([this, PropertyHandle]() -> FReply
-			{
-				RefreshHandle(PropertyHandle);
-				return FReply::Handled();
-			})
-			.ToolTipText(LOCTEXT("RefreshHandleTooltip", "Refresh Steam Input handle for this action"))
-			[
-				SNew(SImage)
-				.Image(FAppStyle::GetBrush("Icons.Refresh"))
-				.ColorAndOpacity(FSlateColor::UseForeground())
-			]
-		]
-	];
+        // Refresh Button
+        + SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [
+            SNew(SButton)
+            .ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
+            .ContentPadding(FMargin(2, 2))
+            .OnClicked_Lambda([this, PropertyHandle]() -> FReply
+            {
+                RefreshHandle(PropertyHandle);
+                return FReply::Handled();
+            })
+            .ToolTipText(LOCTEXT("RefreshHandleTooltip", "Refresh Steam Input handle for this action"))
+            [
+                SNew(SImage)
+                .Image(FAppStyle::GetBrush("Icons.Refresh"))
+                .ColorAndOpacity(FSlateColor::UseForeground())
+            ]
+        ]
+
+        // Spacer to push everything left
+        + SHorizontalBox::Slot()
+        .FillWidth(1.0f)
+        [
+            SNullWidget::NullWidget
+        ]
+    ];
 }
 
 void FSettingsInspector::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle,

@@ -14,27 +14,32 @@
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
-    "Plugins": [
-        {
-            "Name": "SteamShared",
-            "Enabled": true,
-            "PlatformAllowList": [
-                "Win64",
-                "Mac",
-                "Linux"
-            ]
-        }
-    ],
+	"Plugins": [
+		{
+			"Name": "SteamShared",
+			"Enabled": true,
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Linux"
+			]
+		}
+	],
 	"Modules": [
 		{
 			"Name": "SteamCore",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault"
 		},
-        {
-            "Name": "SteamInput",
-            "Type": "Runtime",
-            "LoadingPhase": "Default"
-        }
+		{
+			"Name": "SteamInput",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "SteamDebug",
+			"Type": "DeveloperTool",
+			"LoadingPhase": "Default"
+		}
 	]
 }

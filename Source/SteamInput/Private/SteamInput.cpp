@@ -31,6 +31,8 @@ void FSteamInputModule::StartupModule()
     }
 
 	EKeys::AddMenuCategoryDisplayInfo(GetDefault<USteamInputSettings>()->MenuCategory, LOCTEXT("Steam Keys", "Steam Key Category"), TEXT("GraphEditor.PadEvent_16x"));
+
+	InitializeSlateIntegration();
 	
 #if WITH_EDITOR
     ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
@@ -48,6 +50,26 @@ void FSteamInputModule::StartupModule()
 #endif
 
 	InputInitialized.Broadcast();
+}
+
+void FSteamInputModule::InitializeSlateIntegration() const
+{
+	UE_LOG(SteamInputLog, Log, TEXT("Initializing Slate integration"));
+	
+	USteamInputSettings* Settings = GetMutableDefault<USteamInputSettings>();
+	
+	// If Steam Input is already initialized, set up Slate integration immediately
+	if (bSteamInputInitialized)
+	{
+		if (Settings->bAutoConfigureCommonNavigation)
+		{
+			Settings->SetupDefaultSlateBindings();
+		}
+		Settings->UpdateSlateNavigationConfig();
+	}
+	// Otherwise, it will be set up when Steam Input initializes via the delegate
+	
+	UE_LOG(SteamInputLog, Log, TEXT("Slate integration initialized"));
 }
 
 void FSteamInputModule::ShutdownModule()
