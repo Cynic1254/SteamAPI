@@ -21,4 +21,9 @@ public:
 private:
     TSharedPtr<class FSteamClientInstanceHandler> ClientHandle;
     bool Initialized = false;
+
+    virtual bool Tick( float DeltaTime );
+    
+    //Steam needs to have regular tick updates
+    FTSTicker::FDelegateHandle TickHandle;
 };

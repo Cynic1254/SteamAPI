@@ -1,0 +1,89 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "SteamInputTypes.h"
+#include "GenericPlatform/GenericInputDeviceMap.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "SteamInputFunctionLibrary.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class STEAMINPUT_API USteamInputFunctionLibrary : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
+public:
+	/// Push an action set layer by name to the provided controller. This will put the layer at the top of the list even if it was already in the list
+	/// @param ControllerHandle Device ID of the steam controller you want to push the action set layer to
+	/// @param Name Name of the action set layer to push
+	UFUNCTION(BlueprintCallable)
+	static void PushActionSetLayerByName(FInputDeviceId ControllerHandle, FName Name);
+	/// Push an action set layer by ID to the provided controller. This will put the layer at the top of the list even if it was already in the list
+	/// @param ControllerHandle Device ID of the steam controller you want to push the action set layer to
+	/// @param Handle Action set handle of the layer to push
+	UFUNCTION(BlueprintCallable)
+	static void PushActionSetLayer(FInputDeviceId ControllerHandle, FInputActionSetHandle Handle);
+
+	/// Remove an action set layer by name from the provided controller.
+	/// @param ControllerHandle Device ID of the steam controller you want to remove the layer fromm
+	/// @param Name name of the action set layer to remove
+	UFUNCTION(BlueprintCallable)
+	static void RemoveActionSetLayerByName(FInputDeviceId ControllerHandle, FName Name);
+	/// Remove an action set layer by ID from the provided controller.
+	/// @param ControllerHandle Device ID of the steam controller you want to remove the layer fromm
+	/// @param Handle Action set handle of the action set layer to remove
+	UFUNCTION(BlueprintCallable)
+	static void RemoveActionSetLayer(FInputDeviceId ControllerHandle, FInputActionSetHandle Handle);
+
+	/// Get a list of the active layers for the controller
+	/// @param ControllerHandle Device ID of the steam controller you want to get the layers from
+	/// @return Array containing all the layers that are active on the controller
+	static TArray<InputActionSetHandle_t>* GetActionLayersForController(const FInputDeviceId& ControllerHandle);
+
+	/// Get the active action set for the controller
+	/// @param ControllerHandle Device ID of the steam controller to get the active action set from
+	/// @return The active action set for the controller
+	UFUNCTION(BlueprintCallable)
+	static FInputActionSetHandle GetActionSetForController(FInputDeviceId ControllerHandle);
+
+	/// Activate an action set by name for the controller
+	/// @param ControllerHandle The controller to activate the action set for
+	/// @param HandleName Name of the action set to activate
+	UFUNCTION(BlueprintCallable, DisplayName = "Activate Action Set (By Name)")
+	static void ActivateActionSetByName(FInputDeviceId ControllerHandle, FName HandleName);
+	/// Activate an action set by ID for the controller
+	/// @param ControllerHandle The controller to activate the action set for
+	/// @param Handle The handle of the action set to activate
+	UFUNCTION(BlueprintCallable, DisplayName = "Activate Action Set (By Handle)")
+	static void ActivateActionSet(FInputDeviceId ControllerHandle, FInputActionSetHandle Handle);
+
+	/// Translate the action set name into the ID, this caches the information for easy lookup later
+	/// @param Name The name of the action set
+	/// @return The Handle for the action set
+	UFUNCTION(BlueprintCallable)
+	static FInputActionSetHandle GetActionHandle(FName Name);
+	/// Translate the action set ID into it's name, for this to work GetActionHandle would need to have cached the information before
+	/// @param Handle The handle of the action set
+	/// @return The name of the action set if it's known, returns the ID in Hex otherwise
+	UFUNCTION(BlueprintCallable)
+	static FName GetActionName(FInputActionSetHandle Handle);
+
+	/// Translate the Steam Controller ID into the Unreal Engine Controller ID
+	/// @param InputHandle The Hardware ID of the controller
+	/// @return The Unreal Engine Device ID the controller is bound to
+	UFUNCTION(BlueprintCallable)
+	static FInputDeviceId GetDeviceIDFromSteamID(FInputHandle InputHandle);
+private:
+	static TMap<FName, InputActionSetHandle_t> CachedHandles;
+
+	static TMap<FInputDeviceId, InputActionSetHandle_t> ActiveActionSet;
+	static TMap<FInputDeviceId, TArray<InputActionSetHandle_t>> ActionSetLayers;
+	
+	static TInputDeviceMap<uint64> DeviceMappings;
+	
+	friend class FSteamInputController;
+	friend class SInputMonitor;
+};

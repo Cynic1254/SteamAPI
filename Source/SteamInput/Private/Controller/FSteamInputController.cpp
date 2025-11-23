@@ -1,6 +1,6 @@
-﻿#include "FSteamInputController.h"
+﻿#include "Controller/FSteamInputController.h"
 
-#include "ActionSets/ActionSets.h"
+#include "Helper/SteamInputFunctionLibrary.h"
 #include "Settings/SteamInputSettings.h"
 
 DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
@@ -33,13 +33,15 @@ void FSteamInputController::SendControllerEvents()
 	{
 		return;
 	}
-
+	
 	InputHandle_t Controllers[STEAM_INPUT_MAX_COUNT];
 	const int32 ControllerCount = SteamInput()->GetConnectedControllers(Controllers);
+	
+	UpdateControllerState(Controllers, ControllerCount);
 
-	for (int i = 0; i < ControllerCount; ++i)
+	for (auto& ControllerState : ControllerStates)
 	{
-		ProcessControllerInput(i, Controllers[i], ControllerStates[i]);
+		ProcessControllerInput(ControllerState.Key, ControllerState.Value);
 	}
 }
 
@@ -109,20 +111,25 @@ void FSteamInputController::SetVibration(const int32 ControllerId, const FForceF
 	}
 }
 
-void FSteamInputController::ProcessControllerInput(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
+void FSteamInputController::ProcessControllerInput(const FInputHandle& ControllerHandle,
                                                    FControllerState& State)
 {
 	static FName SystemName(TEXT("SteamController"));
 	static FString ControllerName(TEXT("SteamController"));
-	FInputDeviceScope InputScope{this, SystemName, ControllerIndex, ControllerName};
-
-	SteamInput()->ActivateActionSet(ControllerHandle, UActionSets::GetActionSetForController(ControllerIndex));
+	FInputDeviceScope InputScope{this, SystemName, static_cast<int32>(GetTypeHash(ControllerHandle.ControllerID)), ControllerName};
+	
+	FPlatformUserId UserId;
+	FInputDeviceId DeviceId;
+	GetPlatformUserAndDevice(ControllerHandle, UserId, DeviceId);
+	
+	SteamInput()->ActivateActionSet(ControllerHandle, USteamInputFunctionLibrary::GetActionSetForController(DeviceId));
 
 	SteamInput()->DeactivateAllActionSetLayers(ControllerHandle);
-	for (const auto ActionLayer : *UActionSets::GetActionLayersForController(ControllerIndex))
-	{
-		SteamInput()->ActivateActionSetLayer(ControllerHandle, UActionSets::GetActionHandle(ActionLayer));
-	}
+	if (const auto ActionLayers = USteamInputFunctionLibrary::GetActionLayersForController(DeviceId))
+		for (const auto ActionLayer : *ActionLayers)
+		{
+			SteamInput()->ActivateActionSetLayer(ControllerHandle, ActionLayer);
+		}
 	
 	for (auto& Key : GetDefault<USteamInputSettings>()->Keys)
 	{
@@ -136,99 +143,82 @@ void FSteamInputController::ProcessControllerInput(const int32 ControllerIndex, 
 		switch (Key.KeyType)
 		{
 		case EKeyType::Button:
-			ProcessDigitalAction(ControllerIndex, ControllerHandle, ActionName, Key, State);
+			ProcessDigitalAction(UserId, DeviceId, ControllerHandle, ActionName, Key, State);
 			break;
 		default:
-			ProcessAnalogAction(ControllerIndex, ControllerHandle, ActionName, Key, State);
+			ProcessAnalogAction(UserId, DeviceId, ControllerHandle, ActionName, Key, State);
 			break;
 		}
 	}
 }
 
-void FSteamInputController::ProcessDigitalAction(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
+void FSteamInputController::ProcessDigitalAction(const FPlatformUserId UserID, const FInputDeviceId DeviceId, const FInputHandle& ControllerHandle,
 	const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const
 {
-	const auto [bState, bActive] = SteamInput()->GetDigitalActionData(ControllerHandle, ActionData.CachedHandle);
-
-	const bool bPreviousState = State.DigitalStatusMap.FindRef(ActionName);
-
-	const FPlatformUserId UserId = GetPlatformUserId(ControllerIndex);
-	const FInputDeviceId DeviceId = GetInputDeviceId(ControllerIndex);
-
-	if (UserId == PLATFORMUSERID_NONE || DeviceId == INPUTDEVICEID_NONE)
+	if (UserID == PLATFORMUSERID_NONE || DeviceId == INPUTDEVICEID_NONE)
 	{
 		return;
 	}
+	
+	const auto [bState, bActive] = SteamInput()->GetDigitalActionData(ControllerHandle, ActionData.CachedHandle);
+
+	const bool bPreviousState = State.DigitalStatusMap.FindRef(ActionName);
 
 	const double CurrentTime = FPlatformTime::Seconds();
 
 	if (!bPreviousState && bState)
 	{
-		MessageHandler->OnControllerButtonPressed(ActionName, UserId, DeviceId, false);
+		MessageHandler->OnControllerButtonPressed(ActionName, UserID, DeviceId, false);
 		UpdateKeyRepeatTiming(ActionName, State, CurrentTime);
-
-		//TODO: Process Slate
 	}
 	else if (bPreviousState && !bState)
 	{
-		MessageHandler->OnControllerButtonReleased(ActionName, UserId, DeviceId, false);
+		MessageHandler->OnControllerButtonReleased(ActionName, UserID, DeviceId, false);
 		State.DigitalRepeatTimeMap.Remove(ActionName);
-
-		//TODO: Process Slate
 	}
 	else if (bPreviousState && bState && ShouldProcessKeyRepeat(ActionName, State, CurrentTime))
 	{
-		MessageHandler->OnControllerButtonPressed(ActionName, UserId, DeviceId, true);
+		MessageHandler->OnControllerButtonPressed(ActionName, UserID, DeviceId, true);
 		UpdateKeyRepeatTiming(ActionName, State, CurrentTime);
 	}
 
 	State.DigitalStatusMap.Add(ActionName, bState);
 }
 
-void FSteamInputController::ProcessAnalogAction(const int32 ControllerIndex, const InputHandle_t ControllerHandle,
+void FSteamInputController::ProcessAnalogAction(const FPlatformUserId UserID, const FInputDeviceId DeviceId, const FInputHandle& ControllerHandle,
 	const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const
 {
 	const InputAnalogActionData_t ActionState = SteamInput()->GetAnalogActionData(ControllerHandle, ActionData.CachedHandle);
 
 	const ControllerAnalogActionData_t PreviousState = State.AnalogStatusMap.FindRef(ActionName);
 
-	const FPlatformUserId UserId = GetPlatformUserId(ControllerIndex);
-	const FInputDeviceId DeviceId = GetInputDeviceId(ControllerIndex);
-
-	if (UserId == PLATFORMUSERID_NONE || DeviceId == INPUTDEVICEID_NONE)
+	if (UserID == PLATFORMUSERID_NONE || DeviceId == INPUTDEVICEID_NONE)
 	{
 		return;
 	}
 
 	switch (ActionData.KeyType)
 	{
-	case EKeyType::MouseInput:
-		{
-			if (ActionState.x != 0.0f || ActionState.y != 0)
-			{
-				MessageHandler->OnRawMouseMove(ActionState.x, ActionState.y);
-			}
-		}
-		break;
 	case EKeyType::Analog:
 		{
 			if (PreviousState.x != ActionState.x)
 			{
-				MessageHandler->OnControllerAnalog(ActionName, UserId, DeviceId, ActionState.x);
+				MessageHandler->OnControllerAnalog(ActionName, UserID, DeviceId, ActionState.x);
 			}
 		}
 		break;
+	case EKeyType::MouseInput:
 	case EKeyType::Joystick:
 		if (PreviousState.x != ActionState.x)
 		{
 			const FName XAxisName = USteamInputSettings::GetXAxisName(ActionName);
-			MessageHandler->OnControllerAnalog(XAxisName, UserId, DeviceId, ActionState.x);
+			MessageHandler->OnControllerAnalog(XAxisName, UserID, DeviceId, ActionState.x);
 		}
 			
 		if (PreviousState.y != ActionState.y)
 		{
 			const FName YAxisName = USteamInputSettings::GetYAxisName(ActionName);
-			MessageHandler->OnControllerAnalog(YAxisName, UserId, DeviceId, ActionState.y);
+			MessageHandler->OnControllerAnalog(YAxisName, UserID, DeviceId, ActionState.y);
 		}
 		break;
 	default:
@@ -238,8 +228,74 @@ void FSteamInputController::ProcessAnalogAction(const int32 ControllerIndex, con
 	State.AnalogStatusMap.Add(ActionName, ActionState);
 }
 
+void FSteamInputController::UpdateControllerState(const InputHandle_t* ConnectedControllers, const int32 Count)
+{
+	//remove controllers that have been disconnected for more than 1 frame, and mark connected controllers as disconnected
+	for (auto It = ControllerStates.CreateIterator(); It; ++It)
+	{
+		switch (It.Value().ConnectionState)
+		{
+		case FControllerState::Reconnect:
+		case FControllerState::Connected:
+			{
+				It.Value().ConnectionState = FControllerState::Disconnected;
+				break;
+			}
+		case FControllerState::Disconnected:
+			{
+				It.RemoveCurrent();
+				continue;
+			}
+		}
+	}
+
+	//mark currently connected controllers as connected.
+	for (int i = 0; i < Count; ++i)
+	{
+		//if the controller is already in the list, just mark it as connected, otherwise mark it as a new (re)connection
+		if (const auto ControllerState = ControllerStates.Find(ConnectedControllers[i]))
+		{
+			ControllerState->ConnectionState = FControllerState::Connected;
+		}
+		else
+		{
+			ControllerStates.Add(ConnectedControllers[i]).ConnectionState = FControllerState::Reconnect;
+		}
+	}
+}
+
+void FSteamInputController::GetPlatformUserAndDevice(const FInputHandle InputHandle, FPlatformUserId& OutUserID,
+                                                     FInputDeviceId& OutDeviceId)
+{
+	OutDeviceId = USteamInputFunctionLibrary::DeviceMappings.GetOrCreateDeviceId(InputHandle);
+
+	IPlatformInputDeviceMapper& DeviceMapper = IPlatformInputDeviceMapper::Get();
+
+	if (auto ControllerState = ControllerStates.Find(InputHandle))
+	{
+		switch (ControllerState->ConnectionState)
+		{
+		case FControllerState::Reconnect:
+			{
+				OutUserID = DeviceMapper.GetPlatformUserForNewlyConnectedDevice();
+				DeviceMapper.Internal_MapInputDeviceToUser(OutDeviceId, OutUserID, EInputDeviceConnectionState::Connected);
+				break;
+			}
+		case FControllerState::Disconnected:
+			{
+				OutUserID = DeviceMapper.GetUserForUnpairedInputDevices();
+				break;
+			}
+		default:
+			{
+				OutUserID = DeviceMapper.GetUserForInputDevice(OutDeviceId);
+			}
+		}
+	}
+}
+
 bool FSteamInputController::ShouldProcessKeyRepeat(const FName& ActionName, FControllerState& State,
-	const double CurrentTime) const
+                                                   const double CurrentTime) const
 {
 	const double* NextRepeatTime = State.DigitalRepeatTimeMap.Find(ActionName);
 	return NextRepeatTime && CurrentTime >= *NextRepeatTime;
@@ -252,17 +308,4 @@ void FSteamInputController::UpdateKeyRepeatTiming(const FName& ActionName, FCont
 	const double DelayToUse = bIsFirstRepeat ? InitialButtonRepeatDelay : ButtonRepeatDelay;
 
 	State.DigitalRepeatTimeMap.Add(ActionName, CurrentTime + DelayToUse);
-}
-
-FInputDeviceId FSteamInputController::GetInputDeviceId(const int32 ControllerIndex) const
-{
-	FPlatformUserId UserId;
-	FInputDeviceId DeviceId;
-	IPlatformInputDeviceMapper::Get().RemapControllerIdToPlatformUserAndDevice(ControllerIndex, UserId, DeviceId);
-	return DeviceId;
-}
-
-FPlatformUserId FSteamInputController::GetPlatformUserId(const int32 ControllerIndex) const
-{
-	return FPlatformMisc::GetPlatformUserForUserIndex(ControllerIndex);
 }

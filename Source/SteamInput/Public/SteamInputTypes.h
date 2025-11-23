@@ -1,4 +1,7 @@
-﻿#pragma once
+﻿// ReSharper disable CppNonExplicitConvertingConstructor
+// ReSharper disable CppNonExplicitConversionOperator
+// ReSharper disable CppUE4CodingStandardNamingViolationWarning
+#pragma once
 
 #include "SteamInputTypes.generated.h"
 
@@ -453,14 +456,17 @@ struct FInputHandle
 	GENERATED_BODY()
 
 	FInputHandle() = default;
-	FInputHandle(const InputHandle_t Handle) : BP_Num(Handle), ControllerID(Handle) {}
+	FInputHandle(const InputHandle_t Handle) : ControllerID(Handle) {}
 	
 	operator InputHandle_t() const {return ControllerID;}
-
-	UPROPERTY(BlueprintReadOnly)
-	int BP_Num;
+	
 	InputHandle_t ControllerID = 0;
 };
+
+FORCEINLINE uint32 GetTypeHash(const FInputHandle& Hash)
+{
+	return Hash;
+}
 
 /// @brief Wrapper to allow the use of InputActionSetHandle_t inside unreal, for c++ this gets freely converted
 USTRUCT(BlueprintType)
@@ -469,12 +475,11 @@ struct FInputActionSetHandle
 	GENERATED_BODY()
 
 	FInputActionSetHandle() = default;
-	FInputActionSetHandle(const InputActionSetHandle_t Handle) : BP_Num(Handle), ActionSetHandle(Handle) {}
+	FInputActionSetHandle(const InputActionSetHandle_t Handle) : ActionSetHandle(Handle) {}
 
 	operator InputActionSetHandle_t() const {return ActionSetHandle;}
 
-	UPROPERTY(BlueprintReadOnly)
-	int BP_Num;
+protected:
 	InputActionSetHandle_t ActionSetHandle = 0;
 };
 
@@ -493,8 +498,8 @@ struct FControllerActionHandle
 	GENERATED_BODY()
 
 	FControllerActionHandle() = default;
-	FControllerActionHandle(const ControllerActionHandle_t Handle) : BP_Num(Handle), ActionHandle(Handle) {}
-	FControllerActionHandle(const ControllerActionHandle_t Handle, const ActionType Type) : BP_Num(Handle), ActionHandle(Handle), Type(Type) {}
+	FControllerActionHandle(const ControllerActionHandle_t Handle) : ActionHandle(Handle) {}
+	FControllerActionHandle(const ControllerActionHandle_t Handle, const ActionType Type) : ActionHandle(Handle), Type(Type) {}
 
 	ControllerDigitalActionHandle_t GetDigitalActionHandle() const
 	{check(Type == ActionType::EUnknown || Type == ActionType::EDigital); return ActionHandle;}
@@ -504,8 +509,6 @@ struct FControllerActionHandle
 	ControllerActionHandle_t GetHandle() const {return ActionHandle;}
 	ActionType GetType() const {return Type;}
 protected:
-	UPROPERTY(BlueprintReadOnly)
-	int BP_Num = 0;
 	ControllerActionHandle_t ActionHandle = 0;
 	UPROPERTY(BlueprintReadOnly)
 	ActionType Type = ActionType::EUnknown;

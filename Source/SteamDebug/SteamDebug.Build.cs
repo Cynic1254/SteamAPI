@@ -10,6 +10,8 @@ public class SteamDebug : ModuleRules
             new string[]
             {
                 "Core",
+                "SteamInput", 
+                "EnhancedInput"
             }
         );
 
@@ -20,8 +22,11 @@ public class SteamDebug : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "ToolMenus"
+                "ToolMenus",
+                "InputCore"
             }
         );
+        
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "Steamworks");
     }
 }

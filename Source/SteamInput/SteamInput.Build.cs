@@ -12,6 +12,7 @@ public class SteamInput : ModuleRules
                 "Core",
                 "InputDevice",
                 "CoreUObject",
+                
             }
         );
 
@@ -24,8 +25,7 @@ public class SteamInput : ModuleRules
                 "ApplicationCore",
                 "Slate",
                 "SlateCore",
-                "SteamShared",
-                
+                "SteamShared"
             }
         );
 

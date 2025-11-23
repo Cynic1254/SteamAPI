@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "IInputDevice.h"
+#include "SteamInputTypes.h"
+#include "GenericPlatform/GenericInputDeviceMap.h"
 #include "steam/isteamcontroller.h"
 
 struct FSteamInputAction;
@@ -34,22 +36,29 @@ private:
 		/** Values for force feedback on this controller.  We only consider the LEFT_LARGE channel for SteamControllers */
 		FForceFeedbackValues VibeValues{};
 
+		enum EConnectionState
+		{
+			Disconnected,
+			Connected,
+			Reconnect,
+		} ConnectionState = Disconnected;
+
 		FControllerState() = default;
 	};
 	
-	FControllerState ControllerStates[STEAM_INPUT_MAX_COUNT];
+	TMap<FInputHandle, FControllerState> ControllerStates;
 
 	bool bControllerInitialized = false;
 	TSharedRef<FGenericApplicationMessageHandler> MessageHandler;
 	double InitialButtonRepeatDelay = 0.2;
 	double ButtonRepeatDelay = 0.1;
 
-	void ProcessControllerInput(int32 ControllerIndex, InputHandle_t ControllerHandle, FControllerState& State);
-	void ProcessDigitalAction(int32 ControllerIndex, InputHandle_t ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const;
-	void ProcessAnalogAction(int32 ControllerIndex, InputHandle_t ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const;
+	void ProcessControllerInput(const FInputHandle& ControllerHandle, FControllerState& State);
+	void ProcessDigitalAction(FPlatformUserId UserID, FInputDeviceId DeviceId, const FInputHandle& ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const;
+	void ProcessAnalogAction(FPlatformUserId UserID, FInputDeviceId DeviceId, const FInputHandle& ControllerHandle, const FName& ActionName, const FSteamInputAction& ActionData, FControllerState& State) const;
 
+	void UpdateControllerState(const InputHandle_t* ConnectedControllers, int32 Count);
+	void GetPlatformUserAndDevice(FInputHandle InputHandle, FPlatformUserId& OutUserID, FInputDeviceId& OutDeviceId);
 	bool ShouldProcessKeyRepeat(const FName& ActionName, FControllerState& State, double CurrentTime) const;
 	void UpdateKeyRepeatTiming(const FName& ActionName, FControllerState& State, double CurrentTime) const;
-	FInputDeviceId GetInputDeviceId(int32 ControllerIndex) const;
-	FPlatformUserId GetPlatformUserId(int32 ControllerIndex) const;
 };
