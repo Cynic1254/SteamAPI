@@ -174,39 +174,43 @@ public:
 	TArray<FSteamInputAction> Keys;
 
 	// Slate Navigation Configuration
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation", 
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation", 
 			  meta = (ToolTip = "Configure how Steam Input actions control UI navigation"))
 	TArray<FSlateNavigationBinding> SlateNavigationBindings;
 	
 	// Quick setup defaults
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation",
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation",
 			  meta = (ToolTip = "Automatically configure common navigation bindings"))
 	bool bAutoConfigureCommonNavigation = true;
 	
 	// Default action names for common navigation
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation",
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation",
 			  meta = (EditCondition = "bAutoConfigureCommonNavigation", GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
 	FName NavigateUpAction = "menu_up";
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation", 
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation", 
 			  meta = (EditCondition = "bAutoConfigureCommonNavigation", GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
 	FName NavigateDownAction = "menu_down";
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation",
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation",
 			  meta = (EditCondition = "bAutoConfigureCommonNavigation", GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))  
 	FName NavigateLeftAction = "menu_left";
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation",
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation",
 			  meta = (EditCondition = "bAutoConfigureCommonNavigation", GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
 	FName NavigateRightAction = "menu_right";
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation",
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation",
 			  meta = (EditCondition = "bAutoConfigureCommonNavigation", GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
 	FName AcceptAction = "menu_accept";
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Slate Navigation",
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | Navigation",
 			  meta = (EditCondition = "bAutoConfigureCommonNavigation", GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
 	FName BackAction = "menu_back";
+	
+	// Mapping for Steam Input Action Origin to it's texture
+	UPROPERTY(Config, EditAnywhere, Category = "Slate | UI")
+	TMap<ESteamInputActionOrigin, TSoftObjectPtr<UTexture2D>> ButtonTextureMapping;
 	
 	static const FName MenuCategory;
 	
@@ -221,9 +225,6 @@ public:
 
 	void UpdateSlateNavigationConfig();
 	void SetupDefaultSlateBindings();
-
-	UPROPERTY(VisibleAnywhere)
-	int AppID;
 private:
 	virtual void PostInitProperties() override;
 	virtual void PostLoad() override;
@@ -231,12 +232,15 @@ private:
 	UFUNCTION()
 	void SteamInputInitialized();
 	
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 
 	UFUNCTION(CallInEditor, Category = "Debug")
 	void ValidateSlateIntegration();
 	UFUNCTION(CallInEditor, Category = "Debug")
 	void LogCurrentSlateConfig();
+	
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	int AppID;
 #endif
 };

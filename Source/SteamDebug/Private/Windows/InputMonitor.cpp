@@ -9,8 +9,6 @@
 
 class USteamInputSettings;
 
-DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
-
 void SInputMonitor::Construct(const FArguments& InArgs)
 {
 	SSteamWindowBase::Construct(SSteamWindowBase::FArguments{});
@@ -283,9 +281,14 @@ FSlateColor SInputMonitor::GetActionStateColor(const FSteamInputAction& Action) 
 		
 		//TODO: Color based on if this frame received an input
 	case EKeyType::Analog:
+		return UUSteamDebugSubsystem::Get()->GetKeyValue(Action.ActionName, GetIdFromIndex(SelectedControllerIndex)) == 0.0f ?
+			FLinearColor::Yellow : FLinearColor::Green;
 	case EKeyType::Joystick:
 	case EKeyType::MouseInput:
-		return FSlateColor(FLinearColor::Green);
+		const bool IsZero = 
+			UUSteamDebugSubsystem::Get()->GetKeyValue(USteamInputSettings::GetXAxisName(Action.ActionName), GetIdFromIndex(SelectedControllerIndex)) == 0.0f ||
+			UUSteamDebugSubsystem::Get()->GetKeyValue(USteamInputSettings::GetYAxisName(Action.ActionName), GetIdFromIndex(SelectedControllerIndex)) == 0.0f;
+		return IsZero ? FLinearColor::Yellow : FLinearColor::Green;
 	}
 	
 	return FSlateColor(FLinearColor::White);

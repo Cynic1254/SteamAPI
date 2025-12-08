@@ -1,0 +1,29 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Widgets/SteamButtonDisplayStrategy.h"
+
+#include "Helper/SteamInputFunctionLibrary.h"
+
+FSlateBrush USteamButtonDisplayStrategy::CreatePromptBrush_Implementation(
+	const TArray<FSteamInputActionOrigin>& ActionOrigins, const FSlateBrush& FallbackBrush)
+{
+	if (ActionOrigins.Num() == 0)
+	{
+		return FallbackBrush;
+	}
+
+	UTexture2D* Texture = USteamInputFunctionLibrary::GetTextureFromActionOrigin(ActionOrigins[0]);
+	
+	if (!Texture)
+	{
+		return FallbackBrush;
+	}
+
+	FSlateBrush Brush;
+	Brush.SetResourceObject(Texture);
+	Brush.DrawAs = ESlateBrushDrawType::Image;
+	Brush.Tiling = ESlateBrushTileType::NoTile;
+	
+	return Brush;
+}

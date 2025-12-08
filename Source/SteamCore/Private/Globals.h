@@ -1,3 +1,3 @@
 ﻿#pragma once
 
-DEFINE_LOG_CATEGORY_STATIC(SteamLog, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(SteamCoreLog, Log, All);

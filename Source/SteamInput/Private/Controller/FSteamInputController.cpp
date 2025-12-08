@@ -1,9 +1,8 @@
 ﻿#include "Controller/FSteamInputController.h"
 
+#include "Globals.h"
 #include "Helper/SteamInputFunctionLibrary.h"
 #include "Settings/SteamInputSettings.h"
-
-DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
 
 FSteamInputController::FSteamInputController(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler) : MessageHandler(InMessageHandler)
 {

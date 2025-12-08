@@ -2,13 +2,12 @@
 
 #include "Settings/SteamInputSettings.h"
 
+#include "Globals.h"
 #include "SteamInput.h"
 #include "SteamInputTypes.h"
 #include "Framework/Application/NavigationConfig.h"
 #include "steam/isteaminput.h"
 #include "steam/isteamutils.h"
-
-DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
 
 const FName USteamInputSettings::MenuCategory = "SteamBindings";
 

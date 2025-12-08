@@ -1,5 +1,6 @@
 ﻿#include "SteamInput.h"
 
+#include "Globals.h"
 #include "SteamCore.h"
 #include "Controller/FSteamInputController.h"
 #include "Settings/SettingsInspector.h"
@@ -12,7 +13,7 @@
 
 #define LOCTEXT_NAMESPACE "FSteamInputModule"
 
-DEFINE_LOG_CATEGORY_STATIC(SteamInputLog, Log, All);
+DEFINE_LOG_CATEGORY(SteamInputLog);
 
 void FSteamInputModule::StartupModule()
 {

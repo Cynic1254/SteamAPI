@@ -12,7 +12,7 @@ public class SteamInput : ModuleRules
                 "Core",
                 "InputDevice",
                 "CoreUObject",
-                
+                "UMG"
             }
         );
 

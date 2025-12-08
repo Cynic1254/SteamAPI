@@ -1,11 +1,12 @@
 ﻿#include "SteamDebug.h"
 
+#include "Globals.h"
 #include "ToolMenus.h"
 #include "Windows/InputMonitor.h"
 
 #define LOCTEXT_NAMESPACE "FSteamDebugModule"
 
-DEFINE_LOG_CATEGORY_STATIC(SteamDebug, Log, All)
+DEFINE_LOG_CATEGORY(SteamDebug)
 
 void FSteamDebugModule::StartupModule()
 {

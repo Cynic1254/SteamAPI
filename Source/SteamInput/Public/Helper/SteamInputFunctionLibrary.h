@@ -41,7 +41,7 @@ public:
 	/// Get a list of the active layers for the controller
 	/// @param ControllerHandle Device ID of the steam controller you want to get the layers from
 	/// @return Array containing all the layers that are active on the controller
-	static TArray<InputActionSetHandle_t>* GetActionLayersForController(const FInputDeviceId& ControllerHandle);
+	static TArray<InputActionSetHandle_t>* GetActionLayersForController(FInputDeviceId ControllerHandle);
 
 	/// Get the active action set for the controller
 	/// @param ControllerHandle Device ID of the steam controller to get the active action set from
@@ -76,6 +76,31 @@ public:
 	/// @return The Unreal Engine Device ID the controller is bound to
 	UFUNCTION(BlueprintCallable)
 	static FInputDeviceId GetDeviceIDFromSteamID(FInputHandle InputHandle);
+
+	/// Test if the provided controller is managed by the FSteamInputController
+	/// @param ControllerHandle The Controller to test
+	/// @return true if the controller is managed by steam, false otherwise
+	UFUNCTION(BlueprintCallable)
+	static bool IsSteamController(FInputDeviceId ControllerHandle);
+
+	/// Get the Input Origins for the input action using the currently active action set and action set layers
+	/// @param ControllerHandle The Controller to get the origins off
+	/// @param ActionHandle The action to get the origins off
+	/// @return An array containing the origins
+	UFUNCTION(BlueprintCallable)
+	static TArray<FSteamInputActionOrigin> GetInputActionOriginForCurrentActionSet(FInputDeviceId ControllerHandle, FControllerActionHandle ActionHandle);
+	/// Get the Input Origins for the input action using the provided action set
+	/// @param ControllerHandle The Controller to get the origins off
+	/// @param ActionSetHandle The action set to get the origins off
+	/// @param ActionHandle The action to get the origins off
+	/// @return An array containing the origins
+	UFUNCTION(BlueprintCallable)
+	static TArray<FSteamInputActionOrigin> GetInputActionOrigin(FInputDeviceId ControllerHandle, FInputActionSetHandle ActionSetHandle, FControllerActionHandle ActionHandle);
+	/// Get the texture that is used for the action origin
+	/// @param ActionOrigin Action origin to get the texture from
+	/// @return The texture for the origin
+	UFUNCTION(BlueprintCallable)
+	static UTexture2D* GetTextureFromActionOrigin(FSteamInputActionOrigin ActionOrigin);
 private:
 	static TMap<FName, InputActionSetHandle_t> CachedHandles;
 
@@ -83,6 +108,8 @@ private:
 	static TMap<FInputDeviceId, TArray<InputActionSetHandle_t>> ActionSetLayers;
 	
 	static TInputDeviceMap<uint64> DeviceMappings;
+	
+	static FInputHandle GetHandleFromID(FInputDeviceId ControllerHandle);
 	
 	friend class FSteamInputController;
 	friend class SInputMonitor;

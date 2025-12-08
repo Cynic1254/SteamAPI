@@ -1,24 +1,25 @@
 ﻿#include "SteamCore.h"
 
+#include "Globals.h"
 #include "steam/isteamutils.h"
 #include "steam/steam_api.h"
 
 #define LOCTEXT_NAMESPACE "FSteamCoreModule"
 
-DEFINE_LOG_CATEGORY_STATIC(LogSteamCore, Log, All);
+DEFINE_LOG_CATEGORY(SteamCoreLog);
 
 extern "C" void __cdecl SteamAPIDebugTextHook( int nSeverity, const char *pchDebugText )
 {
 	switch (nSeverity)
 	{
 	case 0:
-		UE_LOG(LogSteamCore, Log, TEXT("%hs"), pchDebugText);
+		UE_LOG(SteamCoreLog, Log, TEXT("%hs"), pchDebugText);
 		break;
 	case 1:
-		UE_LOG(LogSteamCore, Warning, TEXT("%hs"), pchDebugText);
+		UE_LOG(SteamCoreLog, Warning, TEXT("%hs"), pchDebugText);
 		break;
 	default:
-		UE_LOG(LogSteamCore, Error, TEXT("%hs"), pchDebugText);
+		UE_LOG(SteamCoreLog, Error, TEXT("%hs"), pchDebugText);
 		break;
 	}
 }
@@ -31,7 +32,7 @@ void FSteamCoreModule::StartupModule()
 		return;
 	
 	SteamUtils()->SetWarningMessageHook(&SteamAPIDebugTextHook);
-	UE_LOG(LogSteamCore, Log, TEXT("Steam Warnings hooked"));
+	UE_LOG(SteamCoreLog, Log, TEXT("Steam Warnings hooked"));
 
 	TickHandle = FTSTicker::GetCoreTicker().AddTicker(
 		FTickerDelegate::CreateRaw(this, &FSteamCoreModule::Tick)

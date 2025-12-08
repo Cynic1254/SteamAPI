@@ -10,7 +10,7 @@ bool USteamApi::RestartAppIfNecessary(const int AppID)
 {
 	if (SteamAPI_RestartAppIfNecessary(AppID))
 	{
-		UE_LOG(SteamLog, Log, TEXT("Steam requesting app restart"));
+		UE_LOG(SteamCoreLog, Log, TEXT("Steam requesting app restart"));
 
 		if (!GIsEditor || GWorld->WorldType == EWorldType::PIE)
 		{
@@ -18,7 +18,7 @@ bool USteamApi::RestartAppIfNecessary(const int AppID)
 			return true;
 		}
 
-		UE_LOG(SteamLog, Warning, TEXT("Restart requested but running in editor - ignoring"));
+		UE_LOG(SteamCoreLog, Warning, TEXT("Restart requested but running in editor - ignoring"));
 		return false;
 	}
 

@@ -447,7 +447,36 @@ struct FSteamInputActionOrigin
 {
 	GENERATED_BODY()
 	ESteamInputActionOrigin ActionOrigin;
+	
+	FSteamInputActionOrigin() : ActionOrigin(ESteamInputActionOrigin::ENone) {}
+	FSteamInputActionOrigin(ESteamInputActionOrigin InOrigin) : ActionOrigin(InOrigin) {}
+    
+	// Implicit conversion to enum for C++ usage
+	operator ESteamInputActionOrigin() const { return ActionOrigin; }
+    
+	// Equality operator (required for TMap)
+	bool operator==(const FSteamInputActionOrigin& Other) const
+	{
+		return ActionOrigin == Other.ActionOrigin;
+	}
+    
+	bool operator!=(const FSteamInputActionOrigin& Other) const
+	{
+		return ActionOrigin != Other.ActionOrigin;
+	}
+    
+	// For sorting (optional, but useful)
+	bool operator<(const FSteamInputActionOrigin& Other) const
+	{
+		return ActionOrigin < Other.ActionOrigin;
+	}
 };
+
+// Hash function (must be outside the struct, in the same header)
+FORCEINLINE uint32 GetTypeHash(const FSteamInputActionOrigin& Origin)
+{
+	return GetTypeHash(static_cast<uint16>(Origin.ActionOrigin));
+}
 
 /// @brief Wrapper to allow the use of InputHandle_t inside unreal, for c++ this gets freely converted
 USTRUCT(BlueprintType)
