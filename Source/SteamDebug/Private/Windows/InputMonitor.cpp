@@ -395,7 +395,7 @@ FText SInputMonitor::GetActionSetText(const FInputActionSetHandle& ActionSetHand
 	if (ActionSetHandle == 0)
 		return LOCTEXT("NoActionSet", "None");
 	
-	return FText::Format(LOCTEXT("ActionSetName", "{0} - {1}"), static_cast<InputActionSetHandle_t>(ActionSetHandle), FText::FromName(USteamInputFunctionLibrary::GetActionName(ActionSetHandle)));
+	return FText::Format(LOCTEXT("ActionSetName", "{0} - {1}"), static_cast<InputActionSetHandle_t>(ActionSetHandle), FText::FromName(USteamInputFunctionLibrary::GetActionSetName(ActionSetHandle)));
 }
 
 TSharedRef<SWidget> SInputMonitor::CreateActionSetManager()
@@ -640,7 +640,7 @@ FText SInputMonitor::GetCurrentLayersText() const
 	TArray<FString> LayerNames;
 	for (const InputActionSetHandle_t& Layer : *Layers)
 	{
-		LayerNames.Add(USteamInputFunctionLibrary::GetActionName(Layer).ToString());
+		LayerNames.Add(USteamInputFunctionLibrary::GetActionSetName(Layer).ToString());
 	}
 
 	return FText::FromString(FString::Join(LayerNames, TEXT(", ")));
@@ -697,7 +697,7 @@ TSharedRef<SWidget> SInputMonitor::CreateLayersDropdownContent()
 		for (int32 i = Layers->Num() - 1; i >= 0; --i)
 		{
 			const InputActionSetHandle_t LayerHandle = (*Layers)[i];
-			const FName LayerName = USteamInputFunctionLibrary::GetActionName(LayerHandle);
+			const FName LayerName = USteamInputFunctionLibrary::GetActionSetName(LayerHandle);
 			const int32 ActualIndex = i;
 
 			MenuBox->AddSlot()
@@ -883,7 +883,7 @@ FReply SInputMonitor::OnAddNewLayer()
 		return FReply::Handled();
 
 	const FName LayerName(*NewLayerName);
-	USteamInputFunctionLibrary::PushActionSetLayerByName(DeviceId, LayerName);
+	USteamInputFunctionLibrary::PushActionLayerByName(DeviceId, LayerName);
 
 	// Clear the input field
 	NewLayerName.Empty();
@@ -900,12 +900,12 @@ void SInputMonitor::OnLayerCheckChanged(const ECheckBoxState NewState, const FIn
 	if (NewState == ECheckBoxState::Checked)
 	{
 		// Add layer (push to top)
-		USteamInputFunctionLibrary::PushActionSetLayer(DeviceId, LayerHandle);
+		USteamInputFunctionLibrary::PushActionLayer(DeviceId, LayerHandle);
 	}
 	else
 	{
 		// Remove layer
-		USteamInputFunctionLibrary::RemoveActionSetLayer(DeviceId, LayerHandle);
+		USteamInputFunctionLibrary::RemoveActionLayer(DeviceId, LayerHandle);
 	}
 }
 

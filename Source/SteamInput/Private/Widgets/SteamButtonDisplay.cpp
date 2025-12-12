@@ -4,8 +4,8 @@
 #include "Widgets/SteamButtonDisplay.h"
 
 #include "SlateOptMacros.h"
+#include "GameFramework/InputDeviceSubsystem.h"
 #include "Helper/SteamInputFunctionLibrary.h"
-#include "Settings/SteamInputSettings.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -63,7 +63,7 @@ void SSteamButtonDisplay::Tick(const FGeometry& AllottedGeometry, const double I
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
 	// Check if the device assigned to this user changed
-	FInputDeviceId CurrentDeviceId = GetCurrentDeviceId();
+	const FInputDeviceId CurrentDeviceId = GetCurrentDeviceId();
 	if (CurrentDeviceId != CachedDeviceId)
 	{
 		CachedDeviceId = CurrentDeviceId;
@@ -73,8 +73,8 @@ void SSteamButtonDisplay::Tick(const FGeometry& AllottedGeometry, const double I
 	}
 	
 	// Check if origins changed (button remapping, controller change, etc.)
-	TArray<FSteamInputActionOrigin> CurrentOrigins = GetOriginsForAction();
-	uint32 CurrentHash = ComputeOriginHash(CurrentOrigins);
+	const TArray<FSteamInputActionOrigin> CurrentOrigins = GetOriginsForAction();
+	const uint32 CurrentHash = ComputeOriginHash(CurrentOrigins);
 
 	if (CurrentHash != LastOriginHash)
 	{
@@ -92,7 +92,7 @@ void SSteamButtonDisplay::RefreshPrompt()
 		return;
 	}
 
-	TArray<FSteamInputActionOrigin> Origins = GetOriginsForAction();
+	const TArray<FSteamInputActionOrigin> Origins = GetOriginsForAction();
 	CurrentBrush = Strategy->CreatePromptBrush(Origins, FallbackBrush.Get());
 }
 
@@ -104,7 +104,7 @@ FInputDeviceId SSteamButtonDisplay::GetCurrentDeviceId() const
 	}
 
 	// Get the primary input device for this platform user
-	FInputDeviceId DeviceId = IPlatformInputDeviceMapper::Get().GetPrimaryInputDeviceForUser(PlatformUserId);
+	const FInputDeviceId DeviceId = UInputDeviceSubsystem::Get()->GetMostRecentlyUsedInputDeviceId(PlatformUserId);
 	
 	// Only return it if it's a Steam controller
 	if (DeviceId.IsValid() && USteamInputFunctionLibrary::IsSteamController(DeviceId))
@@ -117,51 +117,20 @@ FInputDeviceId SSteamButtonDisplay::GetCurrentDeviceId() const
 
 TArray<FSteamInputActionOrigin> SSteamButtonDisplay::GetOriginsForAction() const
 {
-	FInputDeviceId DeviceId = GetCurrentDeviceId();
+	const FInputDeviceId DeviceId = GetCurrentDeviceId();
 	
 	if (!DeviceId.IsValid() || ActionName.IsNone())
 	{
 		return {};
 	}
 
-	FControllerActionHandle ActionHandle = GetActionHandle();
+	const FControllerActionHandle ActionHandle = USteamInputFunctionLibrary::GetActionHandle(ActionName);
 	if (ActionHandle.GetHandle() == 0)
 	{
 		return {};
 	}
 
 	return USteamInputFunctionLibrary::GetInputActionOriginForCurrentActionSet(DeviceId, ActionHandle);
-}
-
-//TODO: This should be part of the function library
-FControllerActionHandle SSteamButtonDisplay::GetActionHandle() const
-{
-	const USteamInputSettings* Settings = GetDefault<USteamInputSettings>();
-	
-	const FSteamInputAction* Action = Settings->Keys.FindByPredicate([this](const FSteamInputAction& Key)
-	{
-		return Key.ActionName == ActionName;
-	});
-
-	if (!Action || !Action->bHandleValid)
-	{
-		return FControllerActionHandle();
-	}
-
-	ActionType Type = ActionType::EUnknown;
-	switch (Action->KeyType)
-	{
-	case EKeyType::Button:
-		Type = ActionType::EDigital;
-		break;
-	case EKeyType::Analog:
-	case EKeyType::Joystick:
-	case EKeyType::MouseInput:
-		Type = ActionType::EAnalog;
-		break;
-	}
-
-	return FControllerActionHandle(Action->CachedHandle, Type);
 }
 
 uint32 SSteamButtonDisplay::ComputeOriginHash(const TArray<FSteamInputActionOrigin>& Origins)

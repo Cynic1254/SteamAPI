@@ -22,17 +22,17 @@ FInputHandle USteamInputFunctionLibrary::GetHandleFromID(const FInputDeviceId Co
 	return 0;
 }
 
-void USteamInputFunctionLibrary::PushActionSetLayerByName(const FInputDeviceId ControllerHandle, const FName Name)
+void USteamInputFunctionLibrary::PushActionLayerByName(const FInputDeviceId ControllerHandle, const FName Name)
 {
-	PushActionSetLayer(ControllerHandle, GetActionHandle(Name));
+	PushActionLayer(ControllerHandle, GetActionSetHandle(Name));
 }
 
-void USteamInputFunctionLibrary::RemoveActionSetLayerByName(const FInputDeviceId ControllerHandle, const FName Name)
+void USteamInputFunctionLibrary::RemoveActionLayerByName(const FInputDeviceId ControllerHandle, const FName Name)
 {
-	RemoveActionSetLayer(ControllerHandle, GetActionHandle(Name));
+	RemoveActionLayer(ControllerHandle, GetActionSetHandle(Name));
 }
 
-void USteamInputFunctionLibrary::PushActionSetLayer(const FInputDeviceId ControllerHandle, const FInputActionSetHandle Handle)
+void USteamInputFunctionLibrary::PushActionLayer(const FInputDeviceId ControllerHandle, const FInputActionSetHandle Handle)
 {
 	if (Handle == 0)
 	{
@@ -45,7 +45,7 @@ void USteamInputFunctionLibrary::PushActionSetLayer(const FInputDeviceId Control
 	ActionLayers.Add(Handle);
 }
 
-void USteamInputFunctionLibrary::RemoveActionSetLayer(const FInputDeviceId ControllerHandle, const FInputActionSetHandle Handle)
+void USteamInputFunctionLibrary::RemoveActionLayer(const FInputDeviceId ControllerHandle, const FInputActionSetHandle Handle)
 {
 	if (const auto ActionLayers = ActionSetLayers.Find(ControllerHandle))
 	{
@@ -60,12 +60,12 @@ TArray<InputActionSetHandle_t>* USteamInputFunctionLibrary::GetActionLayersForCo
 
 FInputActionSetHandle USteamInputFunctionLibrary::GetActionSetForController(const FInputDeviceId ControllerHandle)
 {
-	return ActiveActionSet.FindRef(ControllerHandle);
+	return ActiveActionSet.FindRef(ControllerHandle, 1);
 }
 
 void USteamInputFunctionLibrary::ActivateActionSetByName(const FInputDeviceId ControllerHandle, const FName HandleName)
 {
-	ActivateActionSet(ControllerHandle, GetActionHandle(HandleName));
+	ActivateActionSet(ControllerHandle, GetActionSetHandle(HandleName));
 }
 
 void USteamInputFunctionLibrary::ActivateActionSet(const FInputDeviceId ControllerHandle, const FInputActionSetHandle Handle)
@@ -78,7 +78,7 @@ void USteamInputFunctionLibrary::ActivateActionSet(const FInputDeviceId Controll
 	ActiveActionSet.FindOrAdd(ControllerHandle) = Handle;
 }
 
-FInputActionSetHandle USteamInputFunctionLibrary::GetActionHandle(const FName Name)
+FInputActionSetHandle USteamInputFunctionLibrary::GetActionSetHandle(const FName Name)
 {
 	if (const InputActionSetHandle_t* Handle = CachedHandles.Find(Name))
 	{
@@ -93,7 +93,7 @@ FInputActionSetHandle USteamInputFunctionLibrary::GetActionHandle(const FName Na
 	return 0;
 }
 
-FName USteamInputFunctionLibrary::GetActionName(const FInputActionSetHandle Handle)
+FName USteamInputFunctionLibrary::GetActionSetName(const FInputActionSetHandle Handle)
 {
 	if (const FName* Name = CachedHandles.FindKey(Handle))
 	{
@@ -173,4 +173,34 @@ UTexture2D* USteamInputFunctionLibrary::GetTextureFromActionOrigin(FSteamInputAc
 	}
 	
 	return USteamInputCache::Get()->GetGlyphTexture(SteamInput()->GetGlyphPNGForActionOrigin(static_cast<EInputActionOrigin>(ActionOrigin.ActionOrigin), k_ESteamInputGlyphSize_Large, 0));
+}
+
+FControllerActionHandle USteamInputFunctionLibrary::GetActionHandle(const FName& ActionName)
+{
+	const USteamInputSettings* Settings = GetDefault<USteamInputSettings>();
+	
+	const FSteamInputAction* Action = Settings->Keys.FindByPredicate([ActionName](const FSteamInputAction& Key)
+	{
+		return Key.ActionName == ActionName;
+	});
+
+	if (!Action || !Action->bHandleValid)
+	{
+		return FControllerActionHandle();
+	}
+
+	ActionType Type = ActionType::EUnknown;
+	switch (Action->KeyType)
+	{
+	case EKeyType::Button:
+		Type = ActionType::EDigital;
+		break;
+	case EKeyType::Analog:
+	case EKeyType::Joystick:
+	case EKeyType::MouseInput:
+		Type = ActionType::EAnalog;
+		break;
+	}
+
+	return FControllerActionHandle(Action->CachedHandle, Type);
 }

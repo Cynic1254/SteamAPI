@@ -539,7 +539,7 @@ struct FControllerActionHandle
 	ActionType GetType() const {return Type;}
 protected:
 	ControllerActionHandle_t ActionHandle = 0;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category="Steam|Input|Type")
 	ActionType Type = ActionType::EUnknown;
 };
 
@@ -558,7 +558,7 @@ struct FControllerDigitalActionHandle : public FControllerActionHandle
 {
 	GENERATED_BODY()
 	FControllerDigitalActionHandle() = default;
-	FControllerDigitalActionHandle(const ControllerAnalogActionHandle_t Handle) : FControllerActionHandle(Handle, ActionType::EAnalog) {}
+	FControllerDigitalActionHandle(const ControllerAnalogActionHandle_t Handle) : FControllerActionHandle(Handle, ActionType::EDigital) {}
 
 	operator ControllerDigitalActionHandle_t() const {return ActionHandle;}
 };
@@ -568,7 +568,7 @@ struct FSteamKey
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Steam", meta = (GetOptions="SteamInput.SteamInputSettings.GetFSteamKeysOptions"))
+	UPROPERTY(EditAnywhere, Category = "Steam|Input", meta = (GetOptions="SteamInput.SteamInputSettings.GetFSteamKeysOptions"))
 	FName Key = "default";
 
 	FSteamKey() = default;

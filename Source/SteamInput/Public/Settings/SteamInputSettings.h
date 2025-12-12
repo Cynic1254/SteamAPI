@@ -112,10 +112,10 @@ struct FSlateNavigationBinding
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Navigation", meta=(GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
+	UPROPERTY(EditAnywhere, Category = "Steam|Input|Navigation", meta=(GetOptions = "SteamInput.SteamInputSettings.GetKeyList"))
 	FName SteamActionName;
 
-	UPROPERTY(EditAnywhere, Category = "Navigation")
+	UPROPERTY(EditAnywhere, Category = "Steam|Input|Navigation")
 	EUINavigationOptions NavigationType = EUINavigationOptions::Invalid;
 
 	FSlateNavigationBinding() = default;
@@ -132,10 +132,10 @@ struct FSteamInputAction
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Config, EditAnywhere, Category = "Steam Input")
+	UPROPERTY(Config, EditAnywhere, Category = "Steam|Input")
 	FName ActionName;
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Steam Input")
+	UPROPERTY(Config, EditAnywhere, Category = "Steam|Input")
 	EKeyType KeyType = EKeyType::Button;
 	
 	bool bHandleValid = false;

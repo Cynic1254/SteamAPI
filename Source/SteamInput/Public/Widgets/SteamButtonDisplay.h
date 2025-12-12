@@ -50,7 +50,6 @@ private:
 	void RefreshPrompt();
 	FInputDeviceId GetCurrentDeviceId() const;
 	TArray<FSteamInputActionOrigin> GetOriginsForAction() const;
-	FControllerActionHandle GetActionHandle() const;
 	static uint32 ComputeOriginHash(const TArray<FSteamInputActionOrigin>& Origins);
 	const FSlateBrush* GetPromptBrush() const {return &CurrentBrush;}
 };
