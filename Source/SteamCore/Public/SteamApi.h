@@ -14,8 +14,10 @@ class STEAMCORE_API USteamApi : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
-	UFUNCTION(BlueprintCallable, Category = "Steam api")
+	UFUNCTION(BlueprintCallable, Category = "Steam")
 	static bool RestartAppIfNecessary(int AppID);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Steam")
+	static int GetAppID();
 private:
 	static void RequestGameExit();
 };

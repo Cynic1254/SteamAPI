@@ -25,6 +25,16 @@ bool USteamApi::RestartAppIfNecessary(const int AppID)
 	return false;
 }
 
+int USteamApi::GetAppID()
+{
+	if (SteamUtils())
+	{
+		return SteamUtils()->GetAppID();
+	}
+	
+	return 0;
+}
+
 void USteamApi::RequestGameExit()
 {
 	if (GEngine)

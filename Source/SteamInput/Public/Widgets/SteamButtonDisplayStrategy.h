@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class STEAMINPUT_API USteamButtonDisplayStrategy : public UObject
 {
 	GENERATED_BODY()
