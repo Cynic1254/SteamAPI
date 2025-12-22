@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "SteamSharedModule.h"
 #include "Modules/ModuleManager.h"
+#include "Containers/Ticker.h"
 
 class FSteamCoreModule : public IModuleInterface
 {

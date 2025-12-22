@@ -1,8 +1,12 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Modules/ModuleInterface.h"
 
 struct FToolMenuSection;
+class SWidget;
+class SWindow;
+struct IConsoleCommand;
 
 class FSteamDebugModule : public IModuleInterface
 {
@@ -44,9 +48,16 @@ void FSteamDebugModule::RegisterDebugWindow(const FName TabId, const FText Displ
     Info.WindowId = TabId;
     Info.DisplayName = DisplayName;
     Info.TooltipText = TooltipText;
-    Info.WidgetFactory = []()
+    Info.WidgetFactory = []() -> TSharedRef<SWidget>
     {
-        return SNew(WidgetType);
+        // Bypass the SNew macro entirely - direct construction
+        TSharedRef<WidgetType> Widget = MakeShared<WidgetType>();
+        
+        // Call Construct with default arguments
+        typename WidgetType::FArguments Args;
+        Widget->Construct(Args);
+        
+        return Widget;
     };
 
     RegisterDebugWindow(Info);

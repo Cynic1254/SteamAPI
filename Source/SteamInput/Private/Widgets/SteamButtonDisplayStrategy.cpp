@@ -4,6 +4,7 @@
 #include "Widgets/SteamButtonDisplayStrategy.h"
 
 #include "Helper/SteamInputFunctionLibrary.h"
+#include "Engine/Texture2D.h"
 
 FSlateBrush USteamButtonDisplayStrategy::CreatePromptBrush_Implementation(
 	const TArray<FSteamInputActionOrigin>& ActionOrigins, const FSlateBrush& FallbackBrush)

@@ -1,8 +1,12 @@
 ﻿#pragma once
 #include "SSteamWindowBase.h"
 
+#include "Widgets/Input/SComboBox.h"
+
 struct FInputActionSetHandle;
 struct FSteamInputAction;
+
+class SVerticalBox;
 
 class SInputMonitor : public SSteamWindowBase
 {

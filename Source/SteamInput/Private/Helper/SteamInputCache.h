@@ -7,6 +7,7 @@
 #include "SteamInputCache.generated.h"
 
 struct FStreamableHandle;
+class UTexture2D;
 /**
  * 
  */
@@ -18,10 +19,8 @@ public:
 	UTexture2D* GetGlyphTexture(const FString& Origin);
 	void ClearCache();
 	
-	static USteamInputCache* Get()
-	{
-		return GEngine->GetEngineSubsystem<USteamInputCache>();
-	}
+	static USteamInputCache* Get();
+
 private:
 	UPROPERTY()
 	TMap<FString, UTexture2D*> TextureCache;

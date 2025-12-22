@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "SteamInputTypes.h"
 #include "UObject/Object.h"
+#include "Styling/SlateBrush.h"
+
 #include "SteamButtonDisplayStrategy.generated.h"
 
 /**

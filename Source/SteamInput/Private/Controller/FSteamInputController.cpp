@@ -3,6 +3,8 @@
 #include "Globals.h"
 #include "Helper/SteamInputFunctionLibrary.h"
 #include "Settings/SteamInputSettings.h"
+#include "CoreGlobals.h"
+#include "Misc/ConfigCacheIni.h"
 
 FSteamInputController::FSteamInputController(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler) : MessageHandler(InMessageHandler)
 {

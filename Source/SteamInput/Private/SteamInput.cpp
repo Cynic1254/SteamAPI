@@ -6,6 +6,7 @@
 #include "Settings/SettingsInspector.h"
 #include "Settings/SteamInputSettings.h"
 #include "steam/isteaminput.h"
+#include "InputCoreTypes.h"
 
 #if WITH_EDITOR
 #include "ISettingsModule.h"

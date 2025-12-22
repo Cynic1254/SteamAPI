@@ -2,7 +2,7 @@
 
 #include "IInputDevice.h"
 #include "SteamInputTypes.h"
-#include "GenericPlatform/GenericInputDeviceMap.h"
+#include "GenericPlatform/IInputInterface.h"
 #include "steam/isteamcontroller.h"
 
 struct FSteamInputAction;

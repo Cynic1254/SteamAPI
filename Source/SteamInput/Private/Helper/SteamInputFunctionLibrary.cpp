@@ -6,6 +6,7 @@
 #include "SteamInputCache.h"
 #include "Controller/FSteamInputController.h"
 #include "Settings/SteamInputSettings.h"
+#include "Engine/Texture2D.h"
 
 TMap<FName, InputActionSetHandle_t> USteamInputFunctionLibrary::CachedHandles = {};
 TMap<FInputDeviceId, InputActionSetHandle_t> USteamInputFunctionLibrary::ActiveActionSet = {};

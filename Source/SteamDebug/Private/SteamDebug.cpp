@@ -2,7 +2,11 @@
 
 #include "Globals.h"
 #include "ToolMenus.h"
-#include "Windows/InputMonitor.h"
+#include "Windows/SInputMonitor.h"
+#include "Widgets/SWindow.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Framework/Docking/TabManager.h"
+#include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "FSteamDebugModule"
 

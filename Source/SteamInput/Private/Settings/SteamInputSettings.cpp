@@ -6,6 +6,7 @@
 #include "SteamInput.h"
 #include "SteamInputTypes.h"
 #include "Framework/Application/NavigationConfig.h"
+#include "Framework/Application/SlateApplication.h"
 #include "steam/isteaminput.h"
 #include "steam/isteamutils.h"
 
@@ -234,18 +235,16 @@ void USteamInputSettings::SetupDefaultSlateBindings()
 
 void USteamInputSettings::PostInitProperties()
 {
-	UObject::PostInitProperties();
+	Super::PostInitProperties();
 
-	SteamInputInitialized::FDelegate Delegate{};
-
-	Delegate.BindUObject(this, &USteamInputSettings::SteamInputInitialized);
-	
-	FSteamInputModule::Get().BindToOnInputInitialized(Delegate);
+	FSteamInputModule::Get().BindToOnInputInitialized(
+		SteamInputInitialized::FDelegate::CreateUObject(this, &USteamInputSettings::SteamInputInitialized)
+	);
 }
 
 void USteamInputSettings::PostLoad()
 {
-	UObject::PostLoad();
+	Super::PostLoad();
 
 	// Setup default bindings if needed and auto-configure is enabled
 	if (bAutoConfigureCommonNavigation && SlateNavigationBindings.Num() == 0)
@@ -256,7 +255,9 @@ void USteamInputSettings::PostLoad()
 
 void USteamInputSettings::SteamInputInitialized()
 {
+#if WITH_EDITORONLY_DATA
 	AppID = SteamUtils()->GetAppID();
+#endif
 
 	RefreshHandles();
 
@@ -273,7 +274,7 @@ void USteamInputSettings::SteamInputInitialized()
 
 void USteamInputSettings::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
 {
-	UObject::PostEditChangeChainProperty(PropertyChangedEvent);
+	Super::PostEditChangeChainProperty(PropertyChangedEvent);
 
 	const FName MemberPropertyName = PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None;
 

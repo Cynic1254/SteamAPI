@@ -6,6 +6,8 @@
 #include "SteamButtonDisplayStrategy.h"
 #include "Widgets/SCompoundWidget.h"
 
+class SImage;
+
 /**
  * 
  */

@@ -5,6 +5,7 @@ public class SteamInput : ModuleRules
     public SteamInput(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        bUseUnity = false;
 
         PublicDependencyModuleNames.AddRange(
             new string[]

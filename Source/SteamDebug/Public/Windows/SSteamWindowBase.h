@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Widgets/SCompoundWidget.h"
+
 class SSteamWindowBase : public SCompoundWidget
 {
 public:
@@ -8,32 +10,7 @@ public:
 
 	virtual ~SSteamWindowBase() override = default;
 
-	void Construct(const FArguments& InArgs)
-	{
-		ChildSlot
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(this, &SSteamWindowBase::GetWindowTitle)
-				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
-			]
-
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SSeparator)
-			]
-
-			+ SVerticalBox::Slot()
-			.FillHeight(1.0f)
-			[
-				ConstructContent()
-			]
-		];
-	}
+	void Construct(const FArguments& InArgs);
 
 protected:
 	virtual TSharedRef<SWidget> ConstructContent() = 0;

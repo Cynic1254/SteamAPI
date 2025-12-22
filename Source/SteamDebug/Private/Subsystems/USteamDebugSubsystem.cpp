@@ -2,6 +2,15 @@
 
 
 #include "Subsystems/USteamDebugSubsystem.h"
+#include "Engine/Engine.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Input/Events.h"
+#include "InputCoreTypes.h"
+
+UUSteamDebugSubsystem* UUSteamDebugSubsystem::Get()
+{
+	return GEngine->GetEngineSubsystem<UUSteamDebugSubsystem>();
+}
 
 void UUSteamDebugSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

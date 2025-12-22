@@ -6,6 +6,7 @@
 #include "SlateOptMacros.h"
 #include "GameFramework/InputDeviceSubsystem.h"
 #include "Helper/SteamInputFunctionLibrary.h"
+#include "Widgets/Images/SImage.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 

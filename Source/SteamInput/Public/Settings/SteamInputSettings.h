@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "SteamInputTypes.h"
 #include "UObject/Object.h"
+#include "Types/SlateEnums.h"
 #include "SteamInputSettings.generated.h"
 
 UENUM()
@@ -38,6 +39,8 @@ enum class EUINavigationOptions : uint8
 	/** Invalid action */
 	Invalid,
 };
+
+class UTexture2D;
 
 // Helper struct to handle conversions
 struct FNavigationOptionHelper
@@ -232,15 +235,14 @@ private:
 	UFUNCTION()
 	void SteamInputInitialized();
 	
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 
 	UFUNCTION(CallInEditor, Category = "Debug")
 	void ValidateSlateIntegration();
 	UFUNCTION(CallInEditor, Category = "Debug")
 	void LogCurrentSlateConfig();
-	
+#endif
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	int AppID;
-#endif
 };

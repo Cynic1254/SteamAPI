@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SteamInputTypes.h"
 #include "Framework/Application/IInputProcessor.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "USteamDebugSubsystem.generated.h"
 
 class FSteamInputProcessor;
+struct FKey;
 
 /**
  * Subsystem for hooking and managing various debug information that can be used by the debug tools
@@ -18,11 +18,8 @@ class STEAMDEBUG_API UUSteamDebugSubsystem : public UEngineSubsystem
 {
 	GENERATED_BODY()
 public:
-	static UUSteamDebugSubsystem* Get()
-	{
-		return GEngine->GetEngineSubsystem<UUSteamDebugSubsystem>();
-	}
-	
+	static UUSteamDebugSubsystem* Get();
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

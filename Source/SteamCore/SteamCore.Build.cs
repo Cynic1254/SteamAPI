@@ -5,6 +5,7 @@ public class SteamCore : ModuleRules
     public SteamCore(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        bUseUnity = false;
 
         PublicDependencyModuleNames.AddRange(
             new string[]

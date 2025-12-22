@@ -5,6 +5,9 @@
 
 #include "steam/steam_api.h"
 #include "Globals.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/World.h"
+#include "Engine/Engine.h"
 
 bool USteamApi::RestartAppIfNecessary(const int AppID)
 {

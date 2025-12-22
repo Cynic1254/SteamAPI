@@ -1,9 +1,19 @@
-﻿#include "Windows/InputMonitor.h"
+﻿#include "Windows/SInputMonitor.h"
 
 #include "Helper/SteamInputFunctionLibrary.h"
 #include "Settings/SteamInputSettings.h"
 #include "steam/isteamcontroller.h"
 #include "Subsystems/USteamDebugSubsystem.h"
+#include "Containers/Ticker.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Layout/SSeparator.h"
+#include "Widgets/Layout/SScrollBar.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/Input/SCheckBox.h"
+#include "Styling/CoreStyle.h"
 
 #define LOCTEXT_NAMESPACE "SteamInputMonitor"
 
