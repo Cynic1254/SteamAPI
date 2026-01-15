@@ -1,4 +1,6 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright 2026 Cynic. All Rights Reserved.
+// Licensed under the Apache License, Version 2.0.
+// See LICENSE file in the project root for full license information.
 
 
 #include "SteamApi.h"
