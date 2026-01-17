@@ -5,6 +5,7 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Layout/SSeparator.h"
+#include "Styling/CoreStyle.h"
 
 void SSteamWindowBase::Construct(const FArguments& InArgs)
 {

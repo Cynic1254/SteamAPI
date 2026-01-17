@@ -21,7 +21,6 @@
 			"Enabled": true,
 			"PlatformAllowList": [
 				"Win64",
-				"Mac",
 				"Linux"
 			]
 		}
@@ -33,7 +32,6 @@
 			"LoadingPhase": "PreDefault",
 			"PlatformAllowList": [
 				"Win64",
-				"Mac",
 				"Linux"
 			]
 		},
@@ -43,7 +41,6 @@
 			"LoadingPhase": "Default",
 			"PlatformAllowList": [
 				"Win64",
-				"Mac",
 				"Linux"
 			]
 		},
@@ -53,7 +50,6 @@
 			"LoadingPhase": "Default",
 			"PlatformAllowList": [
 				"Win64",
-				"Mac",
 				"Linux"
 			]
 		}
